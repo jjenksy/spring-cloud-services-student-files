@@ -1,0 +1,387 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Deploying to Pivotal Cloud Foundry</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Deploying to Pivotal Cloud Foundry - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#pivotal-cloud-foundry:d680e8a854a7cbad6d490c445cba2eba">Pivotal Cloud Foundry</a></li>
+<li><a href="#pcf-apps-manager:d680e8a854a7cbad6d490c445cba2eba">PCF Apps Manager</a></li>
+<li><a href="#cf-cli:d680e8a854a7cbad6d490c445cba2eba">CF CLI</a></li>
+<li><a href="#deploy-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy to PCF</a></li>
+<li><a href="#the-cf-marketplace:d680e8a854a7cbad6d490c445cba2eba">The CF marketplace</a></li>
+<li><a href="#provisioning-a-mysql-database:d680e8a854a7cbad6d490c445cba2eba">Provisioning a MySQL database</a></li>
+<li><a href="#switching-from-in-memory-db-to-mysql:d680e8a854a7cbad6d490c445cba2eba">Switching from In-Memory DB to MySQL</a></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated Time: 30 minutes</p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<ul>
+<li>Gain basic familiarity with Pivotal Cloud Foundry and its Apps Manager</li>
+<li>How to deploy a spring boot application to cloud foundry</li>
+<li>How to create a backing database service</li>
+<li>How to bind an application to a backing database service</li>
+<li>Basic cf commands such for viewing logs, application status, and scaling</li>
+</ul>
+
+<hr />
+
+<h2 id="pivotal-cloud-foundry:d680e8a854a7cbad6d490c445cba2eba">Pivotal Cloud Foundry</h2>
+
+<p>In this lab, we will learn to deploy our application to Pivotal Cloud Foundry (PCF).</p>
+
+<p>A PCF instance has been provisioned for this training.  This instance uses a self-signed SSL certificate.  One implication is that you will be notified by your web browser that your connection to this cloud foundry instance is not private, and will need to explicitly proceed to the destination URL.</p>
+
+<p>Point your web browser to this link:</p>
+
+<p><a href="https://apps.system.esuez.edu.pcfdemo.com/">https://apps.system.esuez.edu.pcfdemo.com/</a></p>
+
+<p>You will be prompted for your username and password.  Your username follows the convention: &ldquo;first initial, last name.&rdquo; For example, John Doe becomes <code>jdoe</code> (all lower case, no separators, no whitespace).</p>
+
+<h2 id="pcf-apps-manager:d680e8a854a7cbad6d490c445cba2eba">PCF Apps Manager</h2>
+
+<p>You have just logged in to the Apps Manager:  a graphical user interface that allows you to navigate your cloud foundry workspace.</p>
+
+<p><img src="images/apps-mgr.png" alt="apps-mgr" title="apps-mgr" /></p>
+
+<p>Note the organization and space hierarchy that will be your work area.  At the moment we have no applications deployed to our space.</p>
+
+<h2 id="cf-cli:d680e8a854a7cbad6d490c445cba2eba">CF CLI</h2>
+
+<p>In order to deploy an application, we&rsquo;ll need the cloud foundry command line client, or <code>cf-cli</code>.</p>
+
+<p>Click on the <code>Tools</code> link at the bottom of the navigation bar on the left hand side of your apps manager:</p>
+
+<p><img src="images/cf-cli-download.png" alt="cf-cli-download" title="cf-cli-download" /></p>
+
+<p>1) Download and install the CLI client that corresponds to your operating system.</p>
+
+<p>If you are on a Mac and using <a href="http://brew.sh/">homebrew</a>, you can install the cloudfoundry cli as follows:</p>
+
+<pre><code>$ brew tap cloudfoundry/tap
+$ brew install cf-cli
+</code></pre>
+
+<p>Verify proper installation with the following command:</p>
+
+<pre><code>➜  cf version
+</code></pre>
+
+<p>.. which should output something similar to:</p>
+
+<pre><code>cf version 6.20.0+25b1961-2016-06-29
+</code></pre>
+
+<p>2) log in the Pivotal Cloud Foundry environment.</p>
+
+<pre><code>➜ cf login -a https://api.system.esuez.edu.pcfdemo.com --skip-ssl-validation
+</code></pre>
+
+<p>You will be prompted for your username and password (the same credentials used to log in to the apps manager).</p>
+
+<p>3) After logging in, the <code>cf api</code> and <code>cf target</code> commands are useful to recall what PCF instance our client is targeting.  Try out these commands and observe the output.</p>
+
+<p>4) Get your bearings:  you will be starting out in a <em>space</em> with no deployed applications.  Invoke the command:</p>
+
+<pre><code>➜  cf apps
+</code></pre>
+
+<p>The output will echo the name of the space we&rsquo;re currently in, and validate that we have no apps defined in that space:</p>
+
+<pre><code>Getting apps in org eitan-org / space development as eitan...
+OK
+
+No apps found
+</code></pre>
+
+<h2 id="deploy-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy to PCF</h2>
+
+<p>Let&rsquo;s now pick up where we left off in the previous lab:  with our <code>hello-spring-boot-rest</code> application.  We can run it locally.  Let&rsquo;s learn how to deploy and run this application to cloud foundry.</p>
+
+<p>The command to deploy an application in cloud foundry is <code>cf push</code>.</p>
+
+<p>1) Review the documentation for the <code>cf push</code> command:</p>
+
+<pre><code>➜ cf help push
+</code></pre>
+
+<p>The output should begin with text that looks like the following:</p>
+
+<pre><code>NAME:
+   push - Push a new app or sync changes to an existing app
+
+USAGE:
+   Push a single app (with or without a manifest):
+   ...
+</code></pre>
+
+<p>2) The relevant options are as follows:</p>
+
+<ul>
+<li>The name our application will be identified by.  This name must be unique within a space.  A suitable name in our case is <code>hello-spring-boot-rest</code>, but feel free to give it a different name.</li>
+<li><code>-p</code>: The path to the build artifact that we wish to deploy:  our jar file</li>
+<li><code>-m</code>: How much memory do we wish to allocate for our application (512M should do)</li>
+<li><code>--random-route</code>:  this flag ensure that our app will have a unique url, or route</li>
+</ul>
+
+<p>3) Putting it all together, to deploy our <code>hello-spring-boot-rest</code> application, we&rsquo;ll first generate our artifact:</p>
+
+<pre><code>➜ mvn clean package
+</code></pre>
+
+<p>and next:</p>
+
+<pre><code>➜ cf push hello-spring-boot-rest -p target/hello-spring-boot-rest-0.0.1-SNAPSHOT.jar -m 512M --random-route
+</code></pre>
+
+<p>4) Observe the console output, and see if you can follow the steps that the <code>cf push</code> command takes to deploy your application to cloud foundry.  The deployment process takes approximately a minute, as the cli will upload your jar file, stage your application, and finally start up the application in a container.</p>
+
+<p>The <code>hello-spring-boot-rest</code> application will be deployed to a random URI in our Pivotal Cloud Foundry Environment.<br />
+Our application will also be listed in the apps manager in our space:</p>
+
+<p><img src="images/app-in-mgr.png" alt="app-in-mgr" title="app-in-mgr" /></p>
+
+<p>The app manager makes it easy to navigate to our running application by providing a link to its route.</p>
+
+<p>5) Browse to the <code>hello-spring-boot-rest</code> <code>/greetings</code> endpoint (e.g. <code>http://&lt;random uri&gt;/greetings</code>) to verify that the <code>hello-spring-boot-rest</code> application is working. The <code>hello-spring-boot-rest</code> application works the same as it did locally.  At this point it is still using an embedded database.</p>
+
+<h2 id="the-cf-marketplace:d680e8a854a7cbad6d490c445cba2eba">The CF marketplace</h2>
+
+<p>We know that we don&rsquo;t want to use our embedded database.</p>
+
+<p>PCF can be used to provision a database for our application, through a feature called managed services.  PCF administrators configure a PCF instance with a variety of managed services.  Once installed, these services can be viewed in the marketplace.</p>
+
+<p>Click on the <em>Marketplace</em> link in the apps manager navigation bar:</p>
+
+<p><img src="images/cf-marketplace.png" alt="cf-marketplace" title="cf-marketplace" /></p>
+
+<p>We will be using the MySQL managed service.</p>
+
+<p>Note that the list of managed services can also be obtained via the cli with:</p>
+
+<pre><code class="language-bash">➜  cf marketplace
+Getting services from marketplace in org eitan-org / space development as eitan...
+OK
+
+service                       plans          description
+app-autoscaler                bronze, gold   Scales bound applications ...
+p-circuit-breaker-dashboard   standard       Circuit Breaker Dashboard ...
+p-config-server               standard       Config Server ...
+p-mysql                       100mb-dev      MySQL service ...
+p-rabbitmq                    standard       RabbitMQ is a ...
+p-service-registry            standard       Service Registry ...
+</code></pre>
+
+<h2 id="provisioning-a-mysql-database:d680e8a854a7cbad6d490c445cba2eba">Provisioning a MySQL database</h2>
+
+<p>With cloud foundry, provisioning a MySQL database is as simple as invoking the following command:</p>
+
+<pre><code class="language-bash">➜ cf create-service p-mysql 100mb-dev greetings-db
+Creating service instance greetings-db in org eitan-org / space development as eitan...
+OK
+</code></pre>
+
+<p>The <code>cf services</code> command can be used to list the services that have been provisioned:</p>
+
+<pre><code class="language-bash">➜  cf services
+Getting services in org eitan-org / space development as eitan...
+OK
+
+name           service   plan        bound apps   last operation
+greetings-db   p-mysql   100mb-dev                create succeeded
+</code></pre>
+
+<h2 id="switching-from-in-memory-db-to-mysql:d680e8a854a7cbad6d490c445cba2eba">Switching from In-Memory DB to MySQL</h2>
+
+<p>In order to switch from hsql to MySQL, we must:</p>
+
+<ul>
+<li>ensure that we package the mysql jdbc driver with our application</li>
+<li>bind our application to the backing database service we just provisioned</li>
+</ul>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml</code>.  By adding the <code>mysql-connector-java</code> dependency, we have added runtime MySQL support for the <code>hello-spring-boot-rest</code> application.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;mysql&lt;/groupId&gt;
+	&lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+	&lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>Since this dependency existed in the <code>pom.xml</code> file already, we do not need to repackage and redeploy its jar file.</p>
+
+<p>2) Let&rsquo;s bind our application to our database service:</p>
+
+<pre><code class="language-bash">➜ cf bind-service hello-spring-boot-rest greetings-db
+Binding service greetings-db to app hello-spring-boot-rest in org eitan-org / space development as eitan...
+OK
+TIP: Use 'cf restage hello-spring-boot-rest' to ensure your env variable changes take effect
+</code></pre>
+
+<p>Ignore the above tip for now.</p>
+
+<p>Invoking <code>cf services</code> once more will validate that our application is indeed bound to <code>greetings-db</code>:</p>
+
+<pre><code class="language-bash">➜  cf services
+Getting services in org eitan-org / space development as eitan...
+OK
+
+name           service   plan        bound apps               last operation
+greetings-db   p-mysql   100mb-dev   hello-spring-boot-rest   create succeeded
+</code></pre>
+
+<p>This binding process exposes configuration to our application via an environment variable, named VCAP_SERVICES.  If we inspect the environment variables associated with our application, we will notice that the application now has a means to look up the jdbc url and access credentials via this environment variable:</p>
+
+<pre><code class="language-bash">➜  cf env hello-spring-boot-rest
+Getting env variables for app hello-spring-boot-rest in org eitan-org / space development as admin...
+OK
+
+System-Provided:
+{
+ &quot;VCAP_SERVICES&quot;: {
+  &quot;p-mysql&quot;: [
+   {
+    &quot;credentials&quot;: {
+     &quot;hostname&quot;: &quot;10.0.16.64&quot;,
+     &quot;jdbcUrl&quot;: &quot;jdbc:mysql://10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?user=YtUKdyagn0nqWPYP\u0026password=1PlnGL2jNktUjcex&quot;,
+     &quot;name&quot;: &quot;cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84&quot;,
+     &quot;password&quot;: &quot;1PlnGL2jNktUjcex&quot;,
+     &quot;port&quot;: 3306,
+     &quot;uri&quot;: &quot;mysql://YtUKdyagn0nqWPYP:1PlnGL2jNktUjcex@10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?reconnect=true&quot;,
+     &quot;username&quot;: &quot;YtUKdyagn0nqWPYP&quot;
+    },
+    &quot;label&quot;: &quot;p-mysql&quot;,
+    &quot;name&quot;: &quot;greetings-db&quot;,
+    &quot;plan&quot;: &quot;100mb-dev&quot;,
+    &quot;provider&quot;: null,
+    &quot;syslog_drain_url&quot;: null,
+    &quot;tags&quot;: [
+     &quot;mysql&quot;,
+     &quot;relational&quot;
+    ]
+   }
+  ]
+ }
+}
+...
+</code></pre>
+
+<p>3) All that remains is to restart our application to allow this environment variable to be applied with our running application.</p>
+
+<pre><code class="language-bash">➜ cf restart hello-spring-boot-rest
+</code></pre>
+
+<p>Inspecting the logs for our application as it&rsquo;s restarting is revealing.  We should be able to see validation from spring that it&rsquo;s configuring a jdbc datasource using a mysql:// scheme, and from our O/R Mapper that it&rsquo;s using a MySQL dialect and that it&rsquo;s auto-generating our database schema:</p>
+
+<pre><code>➜  cf logs hello-spring-boot-rest
+Connected, tailing logs for app hello-spring-boot-rest in org eitan-org / space development as eitan...
+...
+2016-07-26T17:04:29.44-0500 [APP/0]      OUT 2016-07-26 22:04:29.439  INFO 21 --- [           main] urceCloudServiceBeanFactoryPostProcessor : Reconfigured bean dataSource into singleton service connector org.apache.tomcat.jdbc.pool.DataSource@775b5d7{ConnectionPool[defaultAutoCommit=null; defaultReadOnly=null; defaultTransactionIsolation=-1; defaultCatalog=null; driverClassName=com.mysql.jdbc.Driver; maxActive=4; maxIdle=100; minIdle=0; initialSize=0; maxWait=30000; testOnBorrow=true; testOnReturn=false; timeBetweenEvictionRunsMillis=5000; numTestsPerEvictionRun=0; minEvictableIdleTimeMillis=60000; testWhileIdle=false; testOnConnect=false; password=********; url=jdbc:mysql://10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?user=YtUKdyagn0nqWPYP&amp;password=1PlnGL2jNktUjcex; username=null; validationQuery=/* ping */ SELECT 1; validationQueryTimeout=-1; validatorClassName=null; validationInterval=30000; accessToUnderlyingConnectionAllowed=true; removeAbandoned=false; removeAbandonedTimeout=60; logAbandoned=false; connectionProperties=null; initSQL=null; jdbcInterceptors=null; jmxEnabled=true; fairQueue=true; useEquals=true; abandonWhenPercentageFull=0; maxAge=0; useLock=false; dataSource=null; dataSourceJNDI=null; suspectTimeout=0; alternateUsernameAllowed=false; commitOnReturn=false; rollbackOnReturn=false; useDisposableConnectionFacade=true; logValidationErrors=false; propagateInterruptState=false; ignoreExceptionOnPreLoad=false; }
+...
+2016-07-26T17:04:32.12-0500 [APP/0]      OUT 2016-07-26 22:04:32.125  INFO 21 --- [ost-startStop-1] org.hibernate.Version                    : HHH000412: Hibernate Core {4.3.10.Final}
+...
+2016-07-26T17:04:32.74-0500 [APP/0]      OUT 2016-07-26 22:04:32.742  INFO 21 --- [ost-startStop-1] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQLDialect
+...
+2016-07-26T17:04:33.17-0500 [APP/0]      OUT 2016-07-26 22:04:33.175  INFO 21 --- [ost-startStop-1] org.hibernate.tool.hbm2ddl.SchemaUpdate  : HHH000228: Running hbm2ddl schema update
+...
+2016-07-26T17:04:33.20-0500 [APP/0]      OUT 2016-07-26 22:04:33.208  INFO 21 --- [ost-startStop-1] org.hibernate.tool.hbm2ddl.SchemaUpdate  : HHH000232: Schema update complete
+</code></pre>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>When running locally Spring Boot will use the embedded database (<code>hsqldb</code>) and create the <code>DataSource</code> (how to connect to the database) for you.  The Cloud Foundry Java Buildpack will detect a database service binding and re-write the <code>DataSource</code> for you when you run in the cloud, so that you can connect to your bound service.  This part of the Java Buildpack is known as auto-reconfiguration.  More details can be found <a href="https://github.com/cloudfoundry/java-buildpack-auto-reconfiguration">here</a>.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+

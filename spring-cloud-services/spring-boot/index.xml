@@ -1,0 +1,740 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Spring-boots on Spring Cloud Services Training</title>
+    <link>/spring-cloud-services/spring-boot/</link>
+    <description>Recent content in Spring-boots on Spring Cloud Services Training</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>© Copyright Pivotal. All rights reserved.</copyright>
+    <atom:link href="/spring-cloud-services/spring-boot/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Deploying to Pivotal Cloud Foundry</title>
+      <link>/spring-cloud-services/spring-boot/push-to-cf/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/spring-boot/push-to-cf/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 30 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Gain basic familiarity with Pivotal Cloud Foundry and its Apps Manager&lt;/li&gt;
+&lt;li&gt;How to deploy a spring boot application to cloud foundry&lt;/li&gt;
+&lt;li&gt;How to create a backing database service&lt;/li&gt;
+&lt;li&gt;How to bind an application to a backing database service&lt;/li&gt;
+&lt;li&gt;Basic cf commands such for viewing logs, application status, and scaling&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;pivotal-cloud-foundry:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Pivotal Cloud Foundry&lt;/h2&gt;
+
+&lt;p&gt;In this lab, we will learn to deploy our application to Pivotal Cloud Foundry (PCF).&lt;/p&gt;
+
+&lt;p&gt;A PCF instance has been provisioned for this training.  This instance uses a self-signed SSL certificate.  One implication is that you will be notified by your web browser that your connection to this cloud foundry instance is not private, and will need to explicitly proceed to the destination URL.&lt;/p&gt;
+
+&lt;p&gt;Point your web browser to this link:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://apps.system.esuez.edu.pcfdemo.com/&#34;&gt;https://apps.system.esuez.edu.pcfdemo.com/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;You will be prompted for your username and password.  Your username follows the convention: &amp;ldquo;first initial, last name.&amp;rdquo; For example, John Doe becomes &lt;code&gt;jdoe&lt;/code&gt; (all lower case, no separators, no whitespace).&lt;/p&gt;
+
+&lt;h2 id=&#34;pcf-apps-manager:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;PCF Apps Manager&lt;/h2&gt;
+
+&lt;p&gt;You have just logged in to the Apps Manager:  a graphical user interface that allows you to navigate your cloud foundry workspace.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/apps-mgr.png&#34; alt=&#34;apps-mgr&#34; title=&#34;apps-mgr&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Note the organization and space hierarchy that will be your work area.  At the moment we have no applications deployed to our space.&lt;/p&gt;
+
+&lt;h2 id=&#34;cf-cli:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;CF CLI&lt;/h2&gt;
+
+&lt;p&gt;In order to deploy an application, we&amp;rsquo;ll need the cloud foundry command line client, or &lt;code&gt;cf-cli&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Click on the &lt;code&gt;Tools&lt;/code&gt; link at the bottom of the navigation bar on the left hand side of your apps manager:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/cf-cli-download.png&#34; alt=&#34;cf-cli-download&#34; title=&#34;cf-cli-download&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;1) Download and install the CLI client that corresponds to your operating system.&lt;/p&gt;
+
+&lt;p&gt;If you are on a Mac and using &lt;a href=&#34;http://brew.sh/&#34;&gt;homebrew&lt;/a&gt;, you can install the cloudfoundry cli as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ brew tap cloudfoundry/tap
+$ brew install cf-cli
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Verify proper installation with the following command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜  cf version
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;.. which should output something similar to:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cf version 6.20.0+25b1961-2016-06-29
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) log in the Pivotal Cloud Foundry environment.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜ cf login -a https://api.system.esuez.edu.pcfdemo.com --skip-ssl-validation
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You will be prompted for your username and password (the same credentials used to log in to the apps manager).&lt;/p&gt;
+
+&lt;p&gt;3) After logging in, the &lt;code&gt;cf api&lt;/code&gt; and &lt;code&gt;cf target&lt;/code&gt; commands are useful to recall what PCF instance our client is targeting.  Try out these commands and observe the output.&lt;/p&gt;
+
+&lt;p&gt;4) Get your bearings:  you will be starting out in a &lt;em&gt;space&lt;/em&gt; with no deployed applications.  Invoke the command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜  cf apps
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The output will echo the name of the space we&amp;rsquo;re currently in, and validate that we have no apps defined in that space:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Getting apps in org eitan-org / space development as eitan...
+OK
+
+No apps found
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;deploy-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy to PCF&lt;/h2&gt;
+
+&lt;p&gt;Let&amp;rsquo;s now pick up where we left off in the previous lab:  with our &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.  We can run it locally.  Let&amp;rsquo;s learn how to deploy and run this application to cloud foundry.&lt;/p&gt;
+
+&lt;p&gt;The command to deploy an application in cloud foundry is &lt;code&gt;cf push&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;1) Review the documentation for the &lt;code&gt;cf push&lt;/code&gt; command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜ cf help push
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The output should begin with text that looks like the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;NAME:
+   push - Push a new app or sync changes to an existing app
+
+USAGE:
+   Push a single app (with or without a manifest):
+   ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) The relevant options are as follows:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The name our application will be identified by.  This name must be unique within a space.  A suitable name in our case is &lt;code&gt;hello-spring-boot-rest&lt;/code&gt;, but feel free to give it a different name.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-p&lt;/code&gt;: The path to the build artifact that we wish to deploy:  our jar file&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-m&lt;/code&gt;: How much memory do we wish to allocate for our application (512M should do)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--random-route&lt;/code&gt;:  this flag ensure that our app will have a unique url, or route&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;3) Putting it all together, to deploy our &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application, we&amp;rsquo;ll first generate our artifact:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜ mvn clean package
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and next:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜ cf push hello-spring-boot-rest -p target/hello-spring-boot-rest-0.0.1-SNAPSHOT.jar -m 512M --random-route
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Observe the console output, and see if you can follow the steps that the &lt;code&gt;cf push&lt;/code&gt; command takes to deploy your application to cloud foundry.  The deployment process takes approximately a minute, as the cli will upload your jar file, stage your application, and finally start up the application in a container.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application will be deployed to a random URI in our Pivotal Cloud Foundry Environment.&lt;br /&gt;
+Our application will also be listed in the apps manager in our space:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/app-in-mgr.png&#34; alt=&#34;app-in-mgr&#34; title=&#34;app-in-mgr&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The app manager makes it easy to navigate to our running application by providing a link to its route.&lt;/p&gt;
+
+&lt;p&gt;5) Browse to the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; &lt;code&gt;/greetings&lt;/code&gt; endpoint (e.g. &lt;code&gt;http://&amp;lt;random uri&amp;gt;/greetings&lt;/code&gt;) to verify that the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application is working. The &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application works the same as it did locally.  At this point it is still using an embedded database.&lt;/p&gt;
+
+&lt;h2 id=&#34;the-cf-marketplace:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;The CF marketplace&lt;/h2&gt;
+
+&lt;p&gt;We know that we don&amp;rsquo;t want to use our embedded database.&lt;/p&gt;
+
+&lt;p&gt;PCF can be used to provision a database for our application, through a feature called managed services.  PCF administrators configure a PCF instance with a variety of managed services.  Once installed, these services can be viewed in the marketplace.&lt;/p&gt;
+
+&lt;p&gt;Click on the &lt;em&gt;Marketplace&lt;/em&gt; link in the apps manager navigation bar:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/cf-marketplace.png&#34; alt=&#34;cf-marketplace&#34; title=&#34;cf-marketplace&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We will be using the MySQL managed service.&lt;/p&gt;
+
+&lt;p&gt;Note that the list of managed services can also be obtained via the cli with:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜  cf marketplace
+Getting services from marketplace in org eitan-org / space development as eitan...
+OK
+
+service                       plans          description
+app-autoscaler                bronze, gold   Scales bound applications ...
+p-circuit-breaker-dashboard   standard       Circuit Breaker Dashboard ...
+p-config-server               standard       Config Server ...
+p-mysql                       100mb-dev      MySQL service ...
+p-rabbitmq                    standard       RabbitMQ is a ...
+p-service-registry            standard       Service Registry ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;provisioning-a-mysql-database:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Provisioning a MySQL database&lt;/h2&gt;
+
+&lt;p&gt;With cloud foundry, provisioning a MySQL database is as simple as invoking the following command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜ cf create-service p-mysql 100mb-dev greetings-db
+Creating service instance greetings-db in org eitan-org / space development as eitan...
+OK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;cf services&lt;/code&gt; command can be used to list the services that have been provisioned:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜  cf services
+Getting services in org eitan-org / space development as eitan...
+OK
+
+name           service   plan        bound apps   last operation
+greetings-db   p-mysql   100mb-dev                create succeeded
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;switching-from-in-memory-db-to-mysql:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Switching from In-Memory DB to MySQL&lt;/h2&gt;
+
+&lt;p&gt;In order to switch from hsql to MySQL, we must:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ensure that we package the mysql jdbc driver with our application&lt;/li&gt;
+&lt;li&gt;bind our application to the backing database service we just provisioned&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml&lt;/code&gt;.  By adding the &lt;code&gt;mysql-connector-java&lt;/code&gt; dependency, we have added runtime MySQL support for the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;mysql&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;mysql-connector-java&amp;lt;/artifactId&amp;gt;
+	&amp;lt;scope&amp;gt;runtime&amp;lt;/scope&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since this dependency existed in the &lt;code&gt;pom.xml&lt;/code&gt; file already, we do not need to repackage and redeploy its jar file.&lt;/p&gt;
+
+&lt;p&gt;2) Let&amp;rsquo;s bind our application to our database service:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜ cf bind-service hello-spring-boot-rest greetings-db
+Binding service greetings-db to app hello-spring-boot-rest in org eitan-org / space development as eitan...
+OK
+TIP: Use &#39;cf restage hello-spring-boot-rest&#39; to ensure your env variable changes take effect
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Ignore the above tip for now.&lt;/p&gt;
+
+&lt;p&gt;Invoking &lt;code&gt;cf services&lt;/code&gt; once more will validate that our application is indeed bound to &lt;code&gt;greetings-db&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜  cf services
+Getting services in org eitan-org / space development as eitan...
+OK
+
+name           service   plan        bound apps               last operation
+greetings-db   p-mysql   100mb-dev   hello-spring-boot-rest   create succeeded
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This binding process exposes configuration to our application via an environment variable, named VCAP_SERVICES.  If we inspect the environment variables associated with our application, we will notice that the application now has a means to look up the jdbc url and access credentials via this environment variable:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜  cf env hello-spring-boot-rest
+Getting env variables for app hello-spring-boot-rest in org eitan-org / space development as admin...
+OK
+
+System-Provided:
+{
+ &amp;quot;VCAP_SERVICES&amp;quot;: {
+  &amp;quot;p-mysql&amp;quot;: [
+   {
+    &amp;quot;credentials&amp;quot;: {
+     &amp;quot;hostname&amp;quot;: &amp;quot;10.0.16.64&amp;quot;,
+     &amp;quot;jdbcUrl&amp;quot;: &amp;quot;jdbc:mysql://10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?user=YtUKdyagn0nqWPYP\u0026password=1PlnGL2jNktUjcex&amp;quot;,
+     &amp;quot;name&amp;quot;: &amp;quot;cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84&amp;quot;,
+     &amp;quot;password&amp;quot;: &amp;quot;1PlnGL2jNktUjcex&amp;quot;,
+     &amp;quot;port&amp;quot;: 3306,
+     &amp;quot;uri&amp;quot;: &amp;quot;mysql://YtUKdyagn0nqWPYP:1PlnGL2jNktUjcex@10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?reconnect=true&amp;quot;,
+     &amp;quot;username&amp;quot;: &amp;quot;YtUKdyagn0nqWPYP&amp;quot;
+    },
+    &amp;quot;label&amp;quot;: &amp;quot;p-mysql&amp;quot;,
+    &amp;quot;name&amp;quot;: &amp;quot;greetings-db&amp;quot;,
+    &amp;quot;plan&amp;quot;: &amp;quot;100mb-dev&amp;quot;,
+    &amp;quot;provider&amp;quot;: null,
+    &amp;quot;syslog_drain_url&amp;quot;: null,
+    &amp;quot;tags&amp;quot;: [
+     &amp;quot;mysql&amp;quot;,
+     &amp;quot;relational&amp;quot;
+    ]
+   }
+  ]
+ }
+}
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) All that remains is to restart our application to allow this environment variable to be applied with our running application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;➜ cf restart hello-spring-boot-rest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Inspecting the logs for our application as it&amp;rsquo;s restarting is revealing.  We should be able to see validation from spring that it&amp;rsquo;s configuring a jdbc datasource using a mysql:// scheme, and from our O/R Mapper that it&amp;rsquo;s using a MySQL dialect and that it&amp;rsquo;s auto-generating our database schema:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;➜  cf logs hello-spring-boot-rest
+Connected, tailing logs for app hello-spring-boot-rest in org eitan-org / space development as eitan...
+...
+2016-07-26T17:04:29.44-0500 [APP/0]      OUT 2016-07-26 22:04:29.439  INFO 21 --- [           main] urceCloudServiceBeanFactoryPostProcessor : Reconfigured bean dataSource into singleton service connector org.apache.tomcat.jdbc.pool.DataSource@775b5d7{ConnectionPool[defaultAutoCommit=null; defaultReadOnly=null; defaultTransactionIsolation=-1; defaultCatalog=null; driverClassName=com.mysql.jdbc.Driver; maxActive=4; maxIdle=100; minIdle=0; initialSize=0; maxWait=30000; testOnBorrow=true; testOnReturn=false; timeBetweenEvictionRunsMillis=5000; numTestsPerEvictionRun=0; minEvictableIdleTimeMillis=60000; testWhileIdle=false; testOnConnect=false; password=********; url=jdbc:mysql://10.0.16.64:3306/cf_5fb1a1e6_3a35_4813_9f0e_c7a74ed70e84?user=YtUKdyagn0nqWPYP&amp;amp;password=1PlnGL2jNktUjcex; username=null; validationQuery=/* ping */ SELECT 1; validationQueryTimeout=-1; validatorClassName=null; validationInterval=30000; accessToUnderlyingConnectionAllowed=true; removeAbandoned=false; removeAbandonedTimeout=60; logAbandoned=false; connectionProperties=null; initSQL=null; jdbcInterceptors=null; jmxEnabled=true; fairQueue=true; useEquals=true; abandonWhenPercentageFull=0; maxAge=0; useLock=false; dataSource=null; dataSourceJNDI=null; suspectTimeout=0; alternateUsernameAllowed=false; commitOnReturn=false; rollbackOnReturn=false; useDisposableConnectionFacade=true; logValidationErrors=false; propagateInterruptState=false; ignoreExceptionOnPreLoad=false; }
+...
+2016-07-26T17:04:32.12-0500 [APP/0]      OUT 2016-07-26 22:04:32.125  INFO 21 --- [ost-startStop-1] org.hibernate.Version                    : HHH000412: Hibernate Core {4.3.10.Final}
+...
+2016-07-26T17:04:32.74-0500 [APP/0]      OUT 2016-07-26 22:04:32.742  INFO 21 --- [ost-startStop-1] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQLDialect
+...
+2016-07-26T17:04:33.17-0500 [APP/0]      OUT 2016-07-26 22:04:33.175  INFO 21 --- [ost-startStop-1] org.hibernate.tool.hbm2ddl.SchemaUpdate  : HHH000228: Running hbm2ddl schema update
+...
+2016-07-26T17:04:33.20-0500 [APP/0]      OUT 2016-07-26 22:04:33.208  INFO 21 --- [ost-startStop-1] org.hibernate.tool.hbm2ddl.SchemaUpdate  : HHH000232: Schema update complete
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;When running locally Spring Boot will use the embedded database (&lt;code&gt;hsqldb&lt;/code&gt;) and create the &lt;code&gt;DataSource&lt;/code&gt; (how to connect to the database) for you.  The Cloud Foundry Java Buildpack will detect a database service binding and re-write the &lt;code&gt;DataSource&lt;/code&gt; for you when you run in the cloud, so that you can connect to your bound service.  This part of the Java Buildpack is known as auto-reconfiguration.  More details can be found &lt;a href=&#34;https://github.com/cloudfoundry/java-buildpack-auto-reconfiguration&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring Boot Getting Started</title>
+      <link>/spring-cloud-services/spring-boot/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/spring-boot/getting-started/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated time: 25 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;setup:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Setup&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;../labs-setup&#34;&gt;Lab Setup&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to create a Spring Boot Project&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;h3 id=&#34;create-a-spring-boot-project:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Create A Spring Boot Project&lt;/h3&gt;
+
+&lt;p&gt;1) Browse to &lt;a href=&#34;https://start.spring.io/&#34;&gt;https://start.spring.io/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/spring-initializr-init.png&#34; alt=&#34;Spring Initializr&#34; title=&#34;Spring Initializr&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;Fill Out the Form Accordingly:&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;2) Generate a &lt;code&gt;Maven Project&lt;/code&gt; with Spring Boot &lt;code&gt;1.3&lt;/code&gt; (if this version is unavailable then get the latest 1.3.X version, but no SNAPSHOTS).&lt;/p&gt;
+
+&lt;p&gt;3) In the &lt;strong&gt;Project Metadata&lt;/strong&gt; section, add the following:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Group&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;io.pivotal&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Artifact&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;hello-spring-boot&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;4) In the &lt;strong&gt;Dependencies&lt;/strong&gt; section, add the following:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Web&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Completed Form:
+&lt;img src=&#34;images/spring-initializr-complete.png&#34; alt=&#34;Spring Initializr&#34; title=&#34;Spring Initializr&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;5) Click the Generate Project button. Your browser will download a zip file. Unpack that zip file into the repos directory (&lt;code&gt;$REPOS_HOME&lt;/code&gt;).  If you don&amp;rsquo;t know what &lt;code&gt;$REPOS_HOME&lt;/code&gt; is then go back and do the &lt;a href=&#34;../labs-setup&#34;&gt;setup&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;6) Import the project’s &lt;code&gt;pom.xml&lt;/code&gt; into your editor/IDE of choice.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STS Import Help&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;p&gt;Select File &amp;gt; Import&amp;hellip; Then select Maven &amp;gt; Existing Maven Projects. On the Import Maven Projects page, browse to your &lt;code&gt;$REPOS_HOME/hello-spring-boot&lt;/code&gt; (e.g. &lt;code&gt;~/repos/hello-spring-boot&lt;/code&gt;).&lt;/p&gt;
+
+&lt;h3 id=&#34;add-an-endpoint:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Add an Endpoint&lt;/h3&gt;
+
+&lt;p&gt;1) Add a &lt;code&gt;@RestController&lt;/code&gt; annotation to the class &lt;code&gt;io.pivotal.HelloSpringBootApplication&lt;/code&gt; (&lt;code&gt;$REPOS_HOME/hello-spring-boot/src/main/java/io/pivotal/HelloSpringBootApplication.java&lt;/code&gt;).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class HelloSpringBootApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HelloSpringBootApplication.class, args);
+    }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;STS Shortcut Help&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Need help adding an import?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Use the &lt;code&gt;organize imports&lt;/code&gt; command:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;PC:&lt;/strong&gt; Ctrl + Shift + O&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Mac:&lt;/strong&gt; Cmd + Shift + O&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;em&gt;Not sure how to resolve the problem STS is reporting?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Try the &lt;code&gt;quick-fix&lt;/code&gt; (magic shortcut) command:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;PC:&lt;/strong&gt; Ctrl + 1&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Mac:&lt;/strong&gt; Cmd + 1&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Other helpful &lt;a href=&#34;https://blog.codecentric.de/en/2012/08/my-top-10-shortcuts-for-eclipse-on-mac-os-x-and-windows-and-how-you-survive-the-change-from-windows-to-mac/&#34;&gt;shortcuts&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;2) Add the following request handler to the class &lt;code&gt;io.pivotal.HelloSpringBootApplication&lt;/code&gt; (&lt;code&gt;$REPOS_HOME/hello-spring-boot/src/main/java/io/pivotal/HelloSpringBootApplication.java&lt;/code&gt;).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@RequestMapping(&amp;quot;/&amp;quot;)
+public String hello() {
+    return &amp;quot;Hello World!&amp;quot;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Completed:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class HelloSpringBootApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HelloSpringBootApplication.class, args);
+    }
+
+    @RequestMapping(&amp;quot;/&amp;quot;)
+    public String hello() {
+        return &amp;quot;Hello World!&amp;quot;;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;run-the-hello-spring-boot-application:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Run the &lt;code&gt;hello-spring-boot&lt;/code&gt; Application&lt;/h3&gt;
+
+&lt;p&gt;1) Open a terminal window and change to &lt;code&gt;hello-spring-boot&lt;/code&gt; directory:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $REPOS_HOME/hello-spring-boot
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Run the application&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) You should see the application start up an embedded Apache Tomcat server on port 8080 (review terminal output):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-10-02 13:26:59.264  INFO 44749 --- [lication.main()] s.b.c.e.t.TomcatEmbeddedServletContainer : Tomcat started on port(s): 8080 (http)
+2015-10-02 13:26:59.267  INFO 44749 --- [lication.main()] io.pivotal.hello.HelloSpringBootApplication     : Started HelloSpringBootApplication in 2.541 seconds (JVM running for 9.141)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Browse to: &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/hello-world.png&#34; alt=&#34;Hello World&#34; title=&#34;Hello World&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;5) Stop the &lt;code&gt;hello-spring-boot&lt;/code&gt; application.  In the terminal window: &lt;code&gt;Ctrl + C&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Congratulations!&lt;/strong&gt;  You’ve just completed your first Spring Boot application.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring Boot Labs Setup</title>
+      <link>/spring-cloud-services/spring-boot/labs-setup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/spring-boot/labs-setup/</guid>
+      <description>
+
+&lt;h1 id=&#34;labs-setup:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Labs Setup&lt;/h1&gt;
+
+&lt;h3 id=&#34;set-up-the-spring-boot-labs-repo:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up the &lt;code&gt;spring-boot-labs&lt;/code&gt; Repo&lt;/h3&gt;
+
+&lt;p&gt;1) Fork the labs repo to your account.  Browse to: &lt;a href=&#34;https://github.com/pivotal-enablement/spring-boot-labs&#34;&gt;https://github.com/pivotal-enablement/spring-boot-labs&lt;/a&gt;.  Then fork the repo.
+&lt;img src=&#34;images/fork.png&#34; alt=&#34;fork&#34; title=&#34;fork&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;2) GitHub displays your new fork. Copy the HTTPS clone URL from your fork.&lt;/p&gt;
+
+&lt;p&gt;3) Open a new terminal window.  Clone your fork of the &lt;code&gt;spring-boot-labs&lt;/code&gt;.  This contains several applications used to demonstrate Spring Boot.  Get familiar with the sub directories.  We recommend organizing your work into a &lt;code&gt;repos&lt;/code&gt; directory.  A &lt;code&gt;repos&lt;/code&gt; directory is where you will &lt;a href=&#34;https://git-scm.com/docs/git-clone&#34;&gt;clone&lt;/a&gt; repositories and perform your work.  The repos directory can be any directory on your local file system (e.g. &lt;code&gt;~/repos&lt;/code&gt;, &lt;code&gt;C:\Users\Administrator\repos&lt;/code&gt;, etc.).  Throughout the labs we will reference this directory as &lt;code&gt;$REPOS_HOME&lt;/code&gt;.  There is no need to create the &lt;code&gt;$REPOS_HOME&lt;/code&gt; environment variable, it simply a placeholder used to help you organize lab content.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $REPOS_HOME
+$ git clone &amp;lt;Your fork of the spring-boot-labs repo - HTTPS clone URL&amp;gt;
+$ cd spring-boot-labs
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;$REPOS_HOME/spring-boot-labs&lt;/code&gt; will be referred to &lt;code&gt;$SPRING_BOOT_LABS_HOME&lt;/code&gt; throughout the labs.&lt;/p&gt;
+
+&lt;p&gt;4) OPTIONAL STEP - Import applications into your IDE such as Spring Tool Suite (STS).  Importing projects at the &lt;code&gt;spring-boot-labs&lt;/code&gt; level is recommended because there are several projects. Otherwise, use your favorite editor.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STS Import Help:&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Select File &amp;gt; Import&amp;hellip; Then select Maven &amp;gt; Existing Maven Projects. On the Import Maven Projects page, browse to your &lt;code&gt;spring-boot-labs&lt;/code&gt; directory. Make sure all projects are selected and click Finish.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring Boot with Spring Data Rest</title>
+      <link>/spring-cloud-services/spring-boot/spring-data-rest/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/spring-boot/spring-data-rest/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 25 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;a href=&#34;../labs-setup&#34;&gt;Lab Setup&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to use repositories for data access&lt;/li&gt;
+&lt;li&gt;How to expose a REST API on top of those repositories&lt;/li&gt;
+&lt;li&gt;How to use an embedded database for development&lt;/li&gt;
+&lt;li&gt;How to use a production ready database in production&lt;/li&gt;
+&lt;li&gt;How to gain access to the command line arguments and run specific code once&lt;/li&gt;
+&lt;li&gt;How to control log levels&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;h3 id=&#34;add-an-embedded-database:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Add an Embedded Database&lt;/h3&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml&lt;/code&gt;.  By adding the &lt;code&gt;hsqldb&lt;/code&gt; dependency, we have added embedded database support for the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.  This helps us get started quickly in development, as we don&amp;rsquo;t have to provision a database.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;org.hsqldb&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;hsqldb&amp;lt;/artifactId&amp;gt;
+	&amp;lt;scope&amp;gt;runtime&amp;lt;/scope&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;persistence-with-spring-data-jpa:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Persistence With Spring Data JPA&lt;/h3&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml&lt;/code&gt;.  By adding the &lt;code&gt;spring-boot-starter-data-jpa&lt;/code&gt; dependency, we have added Spring Data JPA support for the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;org.springframework.boot&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-boot-starter-data-jpa&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Implementing a data access layer of an application has been cumbersome for quite a while. Too much boilerplate code has to be written to execute simple queries as well as perform pagination, and auditing. Spring Data JPA aims to significantly improve the implementation of data access layers by reducing the effort to the amount that&amp;rsquo;s actually needed. As a developer you write your repository interfaces, including custom finder methods, and Spring will provide the implementation automatically.&lt;/p&gt;
+
+&lt;p&gt;To read more on Spring Data JPA go &lt;a href=&#34;http://docs.spring.io/spring-data/jpa/docs/1.9.0.RELEASE/reference/html/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;2) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/Greeting.java&lt;/code&gt;.  This is a typical JPA domain (&lt;code&gt;Entity&lt;/code&gt;) class.  This class represents one row in our &lt;code&gt;greeting&lt;/code&gt; table.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Entity
+public class Greeting {
+
+	@Id
+	private Integer id;
+
+	private String text;
+
+	public Greeting(Integer id, String text) {
+		super();
+		this.id = id;
+		this.text = text;
+	}
+
+	@Override
+	public String toString() {
+		return &amp;quot;Greeting [id=&amp;quot; + id + &amp;quot;, text=&amp;quot; + text + &amp;quot;]&amp;quot;;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public Greeting() {
+
+	}
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/GreetingRepository.java&lt;/code&gt;.  This repository interface provides &lt;a href=&#34;http://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html&#34;&gt;CRUD operations&lt;/a&gt; against the &lt;code&gt;greeting&lt;/code&gt; table.  All without the developer having to write any implementation!&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public interface GreetingRepository extends JpaRepository&amp;lt;Greeting, Integer&amp;gt;{
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/resources/application.yml&lt;/code&gt;.  The &lt;code&gt;spring.jpa.hibernate.ddl-auto&lt;/code&gt; setting controls how/if DDL changes are made.  In this case, our application will update the schema if needed on startup.  Read more on database initialization &lt;a href=&#34;http://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-restful-api-with-spring-data-rest:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Add a Restful API with Spring Data Rest&lt;/h3&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml&lt;/code&gt;.  By adding the &lt;code&gt;spring-boot-starter-data-rest&lt;/code&gt; dependency, we have added REST support for our JPA repositories in the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;org.springframework.boot&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-boot-starter-data-rest&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The goal of the Spring Data REST project is to provide a solid foundation on which to expose CRUD operations to your repositories using plain HTTP REST semantics.  Read more on Spring Data REST &lt;a href=&#34;http://docs.spring.io/spring-data/rest/docs/2.4.0.RELEASE/reference/html/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;For the &lt;code&gt;GreetingRepository&lt;/code&gt;, Spring Data REST exposes a collection resource at &lt;code&gt;/greetings&lt;/code&gt;. The path is derived from the uncapitalized, pluralized, simple class name of the domain class being managed. It also exposes an item resource for each of the items managed by the repository under the URI template &lt;code&gt;/greetings/{id}&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;We will explore the REST API, once we populate the database.&lt;/p&gt;
+
+&lt;h3 id=&#34;how-to-run-code-on-startup:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;How to Run Code on Startup&lt;/h3&gt;
+
+&lt;p&gt;In many cases, you need to run some code on startup.  Spring Boot allows you capture the command line arguments and run code just as if you had implemented &lt;code&gt;public static void main(String[] args)&lt;/code&gt; by implementing a &lt;code&gt;CommandLineRunner&lt;/code&gt; bean.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;CommandLineRunner&lt;/code&gt; is a core feature to Spring Boot so there are no dependencies that need to be explicitly added.&lt;/p&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/HelloSpringBootApplication.java&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+public class HelloSpringBootApplication {
+
+	Logger logger = LoggerFactory
+			.getLogger(HelloSpringBootApplication.class);
+
+	public static void main(String[] args) {
+		SpringApplication.run(HelloSpringBootApplication.class, args);
+	}
+
+	/**
+	 *
+	 * Loads the database on startup
+	 *
+	 * @param gr
+	 * @return
+	 */
+	@Bean
+	CommandLineRunner loadDatabase(GreetingRepository gr) {
+		return args -&amp;gt; {
+			logger.debug(&amp;quot;loading database..&amp;quot;);
+			gr.save(new Greeting(1, &amp;quot;Hello&amp;quot;));
+			gr.save(new Greeting(2, &amp;quot;Hola&amp;quot;));
+			gr.save(new Greeting(3, &amp;quot;Ohai&amp;quot;));
+			logger.debug(&amp;quot;record count: {}&amp;quot;, gr.count());
+			gr.findAll().forEach(x -&amp;gt; logger.debug(x.toString()));
+		};
+
+	}
+
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this case, we are using a &lt;code&gt;CommandLineRunner&lt;/code&gt; to populate the database with our &lt;code&gt;GreetingRepository&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;turn-up-logging:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Turn Up Logging&lt;/h3&gt;
+
+&lt;p&gt;To view the debug statements in the class we can turn up logging.&lt;/p&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/resources/application.yml&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;logging:
+  level:
+    io:
+      pivotal:DEBUG
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Log levels can be  &lt;code&gt;ERROR&lt;/code&gt;, &lt;code&gt;WARN&lt;/code&gt;, &lt;code&gt;INFO&lt;/code&gt;, &lt;code&gt;DEBUG&lt;/code&gt; or &lt;code&gt;TRACE&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Simply specify the package/class in the &lt;code&gt;logging.level&lt;/code&gt; key and set the desired level.&lt;/p&gt;
+
+&lt;p&gt;In this case, we have turned on &lt;code&gt;DEBUG&lt;/code&gt; logging for everything in the &lt;code&gt;io.pivotal&lt;/code&gt; package.&lt;/p&gt;
+
+&lt;h3 id=&#34;run-hello-spring-boot-rest:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Run &lt;code&gt;hello-spring-boot-rest&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Open a terminal window.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_BOOT_LABS_HOME/hello-spring-boot-rest
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) View the logs in the terminal output.  See the database being populated.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-10-06 13:42:27.350 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : loading database..
+2015-10-06 13:42:27.527 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : record count: 3
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=1, text=Hello]
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=2, text=Hola]
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=3, text=Ohai]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Browse to &lt;a href=&#34;http://localhost:8080/greetings&#34;&gt;http://localhost:8080/greetings&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/greetings.png&#34; alt=&#34;greetings&#34; title=&#34;greetings&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Notice that not just data is returned but links on how to navigate the API.  This is provided by &lt;a href=&#34;http://projects.spring.io/spring-hateoas/&#34;&gt;Spring HATEOAS&lt;/a&gt; as opposed to establishing a contract up front or use of documentation.  Read more on &lt;a href=&#34;https://en.wikipedia.org/wiki/HATEOAS&#34;&gt;HATEOAS&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;4) Experiment with paging and sorting&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Sort by text in ascending order: &lt;a href=&#34;http://localhost:8080/greetings?sort=text,asc&#34;&gt;http://localhost:8080/greetings?sort=text,asc&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Sort by text in decending order: &lt;a href=&#34;http://localhost:8080/greetings?sort=text,desc&#34;&gt;http://localhost:8080/greetings?sort=text,desc&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Get page 0, size 1: &lt;a href=&#34;http://localhost:8080/greetings?size=1&amp;amp;page=0&#34;&gt;http://localhost:8080/greetings?size=1&amp;amp;page=0&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Get page 1, size 1: &lt;a href=&#34;http://localhost:8080/greetings?size=1&amp;amp;page=1&#34;&gt;http://localhost:8080/greetings?size=1&amp;amp;page=1&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;5) Stop the &lt;code&gt;hello-spring-boot-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;When running locally Spring Boot will use the embedded database (&lt;code&gt;hsqldb&lt;/code&gt;) and create the &lt;code&gt;DataSource&lt;/code&gt; (how to connect to the database) for you.&lt;/p&gt;
+
+&lt;p&gt;The purpose of this lab is to set the stage to deploying your application to cloud foundry, which is the topic of the next lab.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

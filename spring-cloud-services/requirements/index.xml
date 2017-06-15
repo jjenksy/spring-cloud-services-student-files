@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Requirements on Spring Cloud Services Training</title>
+    <link>/spring-cloud-services/requirements/</link>
+    <description>Recent content in Requirements on Spring Cloud Services Training</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>© Copyright Pivotal. All rights reserved.</copyright>
+    <atom:link href="/spring-cloud-services/requirements/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Spring Cloud Services Lab Requirements</title>
+      <link>/spring-cloud-services/requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/requirements/</guid>
+      <description>
+
+&lt;h2 id=&#34;personal-experience:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Personal Experience&lt;/h2&gt;
+
+&lt;p&gt;Experience with:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Spring, &lt;a href=&#34;http://projects.spring.io/spring-boot/&#34;&gt;Spring Boot&lt;/a&gt; even better&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://git-scm.com/&#34;&gt;Git&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/&#34;&gt;GitHub&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;pivotal-cloud-foundry-environment:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Pivotal Cloud Foundry Environment&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Access to a Pivotal Cloud Foundry Environment (an environment is not provided as part of the labs)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://network.pivotal.io/products/p-spring-cloud-services&#34;&gt;Spring Cloud Services&lt;/a&gt; 1.1.1 Tile installed in the Pivotal Cloud Foundry Environment&lt;/li&gt;
+&lt;li&gt;6 GB of Memory Quota available&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;local-machine-requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Local machine requirements&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;4GB Memory&lt;/li&gt;
+&lt;li&gt;Java: &lt;a href=&#34;http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html&#34;&gt;JDK 1.8&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://git-scm.com/&#34;&gt;git&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;A &lt;a href=&#34;https://github.com/&#34;&gt;GitHub Account&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://curl.haxx.se/download.html&#34;&gt;&lt;code&gt;curl&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;The CloudFoundry CLI:  &lt;a href=&#34;https://console.run.pivotal.io/tools&#34;&gt;&lt;code&gt;cf&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;If you are on a Mac and using &lt;a href=&#34;http://brew.sh/&#34;&gt;homebrew&lt;/a&gt;, you can install the cloudfoundry cli as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ brew tap cloudfoundry/tap
+$ brew install cf-cli
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;optional-but-recommended:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Optional (but recommended)&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://spring.io/tools&#34;&gt;SpringSource Tool Suite&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://chrome.google.com/webstore/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa?hl=en&#34;&gt;Json Formatter&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

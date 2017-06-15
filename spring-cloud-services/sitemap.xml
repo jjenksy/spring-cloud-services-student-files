@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>/spring-cloud-services/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breaker-metric-aggregation/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breakers/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/spring-cloud-netflix-client-side-load-balancing/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/spring-boot/push-to-cf/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/spring-cloud-netflix-service-discovery/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/spring-boot/getting-started/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/spring-boot/labs-setup/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/spring-boot/spring-data-rest/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/spring-cloud-config/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/requirements/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/scs/labs-setup/</loc>
+  </url>
+  
+  <url>
+    <loc>/spring-cloud-services/_index/</loc>
+  </url>
+  
+</urlset>

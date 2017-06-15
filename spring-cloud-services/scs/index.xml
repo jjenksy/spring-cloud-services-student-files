@@ -1,0 +1,1725 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Scs on Spring Cloud Services Training</title>
+    <link>/spring-cloud-services/scs/</link>
+    <description>Recent content in Scs on Spring Cloud Services Training</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>© Copyright Pivotal. All rights reserved.</copyright>
+    <atom:link href="/spring-cloud-services/scs/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Circuit Breaker Metric Aggregation</title>
+      <link>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breaker-metric-aggregation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breaker-metric-aggregation/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 25 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Requirements&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;/spring-cloud-services/scs-sp1/requirements&#34;&gt;Lab Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to aggregate multiple metric streams with &lt;code&gt;turbine&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;How to use Turbine in Pivotal Cloud Foundry&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&#34;start-the-config-server-service-registry-fortune-service-greeting-hystrix-and-hystrix-dashboard-applications:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Start the  &lt;code&gt;config-server&lt;/code&gt;,  &lt;code&gt;service-registry&lt;/code&gt;, &lt;code&gt;fortune-service&lt;/code&gt;, &lt;code&gt;greeting-hystrix&lt;/code&gt;, and &lt;code&gt;hystrix-dashboard&lt;/code&gt; applications&lt;/h3&gt;
+
+&lt;p&gt;1) Start the &lt;code&gt;config-server&lt;/code&gt; in a terminal window.  You may have terminal windows still open from previous labs.  They may be reused for this lab.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Start the &lt;code&gt;service-registry&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Start the &lt;code&gt;fortune-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Start the &lt;code&gt;greeting-hystrix&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Start the &lt;code&gt;hystrix-dashboard&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/hystrix-dashboard
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Allow a few moments for &lt;code&gt;greeting-hystrix&lt;/code&gt; and &lt;code&gt;fortune-service&lt;/code&gt; to register with the &lt;code&gt;service-registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-turbine:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;turbine&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;Looking at individual application instances in the Hystrix Dashboard is not very useful in terms of understanding the overall health of the system. Turbine is an application that aggregates all of the relevant &lt;code&gt;/hystrix.stream&lt;/code&gt; endpoints into a combined &lt;code&gt;/turbine.stream&lt;/code&gt; for use in the Hystrix Dashboard.&lt;/p&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-starter-turbine&lt;/code&gt; to the classpath this application is eligible to aggregate metrics via Turbine.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.cloud&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;spring-cloud-starter-turbine&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/src/main/java/io/pivotal/TurbineApplication.java&lt;/code&gt;.  Note the use of the &lt;code&gt;@EnableTurbine&lt;/code&gt; annotation. This creates a turbine application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableTurbine
+public class TurbineApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(TurbineApplication.class, args);
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3). Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/src/main/resources/bootstrap.yml&lt;/code&gt;.  &lt;code&gt;turbine.appConfig&lt;/code&gt; is a list of Eureka &lt;code&gt;serviceIds&lt;/code&gt; that Turbine will use to lookup instances.  &lt;code&gt;turbine.aggregator.clusterConfig&lt;/code&gt; is the Turbine cluster these services belong to (how they will be grouped).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;server:
+  port: 8585
+spring:
+  application:
+    name: turbine
+turbine:
+  aggregator:
+    clusterConfig: GREETING-HYSTRIX
+  appConfig: greeting-hystrix
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Open a new terminal window. Start the &lt;code&gt;turbine&lt;/code&gt; app&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/turbine
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Wait for the &lt;code&gt;turbine&lt;/code&gt; application to register with &lt;a href=&#34;http://localhost:8761/&#34;&gt;&lt;code&gt;service-registry&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;6) View the turbine stream in a browser &lt;a href=&#34;http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX&#34;&gt;http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX&lt;/a&gt;
+&lt;img src=&#34;images/turbine-stream.png&#34; alt=&#34;turbine-stream&#34; title=&#34;turbine-stream&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;7) Configure the &lt;a href=&#34;http://localhost:8686/hystrix&#34;&gt;&lt;code&gt;hystrix-dashboard&lt;/code&gt;&lt;/a&gt; to consume the turbine stream.  Enter &lt;code&gt;http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;8) Experiment! Refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint several times.  Take down the &lt;code&gt;fortune-service&lt;/code&gt; app.  What does the dashboard do?&lt;/p&gt;
+
+&lt;p&gt;9) When done, stop the &lt;code&gt;config-server&lt;/code&gt;, &lt;code&gt;service-registry&lt;/code&gt;, &lt;code&gt;fortune-service&lt;/code&gt;, &lt;code&gt;greeting-hystrix&lt;/code&gt;, &lt;code&gt;hystrix-dashboard&lt;/code&gt; and &lt;code&gt;turbine&lt;/code&gt; applications.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Turbine discovered the &lt;code&gt;greeting-hystrix&lt;/code&gt; application through the &lt;code&gt;service-registry&lt;/code&gt; application.  Turbine then consumed the &lt;code&gt;/hystrix.stream&lt;/code&gt; and rolled that up into an aggregate &lt;code&gt;/turbine.stream&lt;/code&gt;.  Therefore, if we had multiple &lt;code&gt;greeting-hystrix&lt;/code&gt; applications running all the metrics could be consumed from this single endpoint (&lt;code&gt;/turbine.stream&lt;/code&gt;)&lt;/p&gt;
+
+&lt;h3 id=&#34;deploying-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploying to PCF&lt;/h3&gt;
+
+&lt;p&gt;In PCF, the traditional Turbine model of pulling metrics from all the distributed Hystrix enabled applications via HTTP doesn’t work when using the &lt;code&gt;route&lt;/code&gt; registrationMethod.  Read &lt;a href=&#34;http://docs.pivotal.io/spring-cloud-services/service-registry/registering-a-service.html&#34;&gt;here&lt;/a&gt; for more details on registration methods.&lt;/p&gt;
+
+&lt;p&gt;When applications register using the &lt;code&gt;route&lt;/code&gt; method every application has the same &lt;code&gt;hostname&lt;/code&gt; (every app instance has the same URL for a given app).  Therefore it is unknown from the Turbine perspective if all metrics are properly being collected.  The problem is solved with Turbine AMQP.  Metrics are published through a message broker.  We&amp;rsquo;ll use RabbitMQ.&lt;/p&gt;
+
+&lt;h3 id=&#34;deploy-greeting-hystrix-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy &lt;code&gt;greeting-hystrix&lt;/code&gt; to PCF&lt;/h3&gt;
+
+&lt;p&gt;1) Create a Circuit Breaker Dashboard Service Instance&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf create-service p-circuit-breaker-dashboard standard circuit-breaker-dashboard
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When creating a Circuit Breaker Service instance there are three items that get provisioned:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Hystrix Dashboard application instance&lt;/li&gt;
+&lt;li&gt;Turbine AMQP application instance&lt;/li&gt;
+&lt;li&gt;RabbitMQ Service Instance&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This process takes some time and won&amp;rsquo;t be immediately available for binding.  Give it a couple of minutes.&lt;/p&gt;
+
+&lt;p&gt;Click on the &lt;strong&gt;&lt;em&gt;Services&lt;/em&gt;&lt;/strong&gt; tab and the &lt;strong&gt;&lt;em&gt;Circuit Breaker&lt;/em&gt;&lt;/strong&gt; entry to navigate to your service.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/services-circuit-breaker.png&#34; alt=&#34;service&#34; title=&#34;services-circuit-breaker&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then, click on the &lt;strong&gt;&lt;em&gt;Manage&lt;/em&gt;&lt;/strong&gt; link to determine when the &lt;code&gt;circuit-breaker&lt;/code&gt; dashboard is ready.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/manage-circuit-breaker.png&#34; alt=&#34;manage&#34; title=&#34;manage-circuit-breaker&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;2) Package and push the &lt;code&gt;greeting-hystrix&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean package
+$ cf push greeting-hystrix -p target/greeting-hystrix-0.0.1-SNAPSHOT.jar -m 1G --random-route --no-start
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Bind services for the &lt;code&gt;greeting-hystrix&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf bind-service greeting-hystrix config-server
+$ cf bind-service greeting-hystrix service-registry
+$ cf bind-service greeting-hystrix circuit-breaker-dashboard
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;4) Set the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable for the &lt;code&gt;greeting-hystrix&lt;/code&gt; application (our PCF instance is using self-signed SSL certificates).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf set-env greeting-hystrix TRUST_CERTS &amp;lt;your api endpoint&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;5) Start the &lt;code&gt;greeting-hystrix&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf start greeting-hystrix
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) Experiment! Refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; / endpoint several times. Take down the fortune-service app. Scale the greeting-hystrix app. What does the dashboard do?&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;greeting-hystrix&lt;/code&gt; application is publishing metrics via AMQP to RabbitMQ (this can be discovered by looking at &lt;code&gt;VCAP_SERVICES&lt;/code&gt;).  Those metrics are then consumed and aggregated by Turbine.  The Circuit Breaker Dashboard then consumes the Turbine endpoint.  All of this detail has been abstracted away by using the PCF Circuit Breaker Dashboard Service.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Circuit Breakers</title>
+      <link>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breakers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/spring-cloud-netflix-circuit-breakers/</guid>
+      <description>
+
+&lt;h1 id=&#34;spring-cloud-netflix-circuit-breakers:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Spring Cloud Netflix: Circuit Breakers&lt;/h1&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 25 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Requirements&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;/spring-cloud-services/scs-sp1/requirements&#34;&gt;Lab Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to protect your application (&lt;code&gt;greeting-hystrix&lt;/code&gt;) from failures or latency with the circuit breaker pattern&lt;/li&gt;
+&lt;li&gt;How to publish circuit-breaking metrics from your application (&lt;code&gt;greeting-hystrix&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;How to consume metric streams with the &lt;code&gt;hystrix-dashboard&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&#34;start-the-config-server-service-registry-and-fortune-service:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Start the  &lt;code&gt;config-server&lt;/code&gt;,  &lt;code&gt;service-registry&lt;/code&gt;, and &lt;code&gt;fortune-service&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Start the &lt;code&gt;config-server&lt;/code&gt; in a terminal window.  You may have terminal windows still open from previous labs.  They may be reused for this lab.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Start the &lt;code&gt;service-registry&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Start the &lt;code&gt;fortune-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;set-up-greeting-hystrix:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;greeting-hystrix&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-services-starter-circuit-breaker&lt;/code&gt; to the classpath this application is eligible to use circuit breakers via Hystrix.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;io.pivotal.spring.cloud&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-cloud-services-starter-circuit-breaker&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix/src/main/java/io/pivotal/GreetingHystrixApplication.java&lt;/code&gt;.  Note the use of the &lt;code&gt;@EnableCircuitBreaker&lt;/code&gt; annotation. This allows the application to create circuit breakers.  Note also how we again configure our &lt;code&gt;RestTemplate&lt;/code&gt; bean to be load-balanced.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableDiscoveryClient
+@EnableCircuitBreaker
+public class GreetingHystrixApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GreetingHystrixApplication.class, args);
+    }
+
+    @LoadBalanced
+    @Bean
+    RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3). Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix/src/main/java/io/pivotal/fortune/FortuneService.java&lt;/code&gt;.  Note the use of the &lt;code&gt;@HystrixCommand&lt;/code&gt;.  This is our circuit breaker.  If &lt;code&gt;getFortune()&lt;/code&gt; fails, a fallback method &lt;code&gt;defaultFortune&lt;/code&gt; will be invoked.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Service
+public class FortuneService {
+
+  Logger logger = LoggerFactory.getLogger(FortuneService.class);
+
+  @Autowired
+  private RestTemplate restTemplate;
+
+  @HystrixCommand(fallbackMethod = &amp;quot;defaultFortune&amp;quot;)
+  public String getFortune() {
+    return restTemplate.getForObject(&amp;quot;http://fortune-service&amp;quot;, String.class);
+  }
+
+  public String defaultFortune() {
+    logger.debug(&amp;quot;Default fortune used.&amp;quot;);
+    return &amp;quot;This fortune is no good. Try another.&amp;quot;;
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Open a new terminal window. Start the &lt;code&gt;greeting-hystrix&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint.  You should get fortunes from the &lt;code&gt;fortune-service&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;6) Stop the &lt;code&gt;fortune-service&lt;/code&gt;.  And refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint again.  The default fortune is given.&lt;/p&gt;
+
+&lt;p&gt;7) Restart the &lt;code&gt;fortune-service&lt;/code&gt;.  And refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint again.  After some time, fortunes from the &lt;code&gt;fortune-service&lt;/code&gt; are back.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The circuit breaker insulated &lt;code&gt;greeting-hystrix&lt;/code&gt; from failures when the &lt;code&gt;fortune-service&lt;/code&gt; was not available.  This results in a better experience for our users and can also prevent cascading failures.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-the-greeting-hystrix-metric-stream:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up the &lt;code&gt;greeting-hystrix&lt;/code&gt; metric stream&lt;/h3&gt;
+
+&lt;p&gt;Being able to monitor the state of our circuit breakers is highly valuable, but first the &lt;code&gt;greeting-hystrix&lt;/code&gt; application must expose the metrics.&lt;/p&gt;
+
+&lt;p&gt;This is accomplished by including the &lt;code&gt;actuator&lt;/code&gt; dependency in the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;pom.xml&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-boot-starter-actuator&lt;/code&gt; to the classpath this application will publish metrics at the &lt;code&gt;/hystrix.stream&lt;/code&gt; endpoint.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;org.springframework.boot&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-boot-starter-actuator&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Browse to &lt;a href=&#34;http://localhost:8080/hystrix.stream&#34;&gt;http://localhost:8080/hystrix.stream&lt;/a&gt; to review the metric stream.
+&lt;img src=&#34;images/hystrix-stream.png&#34; alt=&#34;hystrix-stream&#34; title=&#34;hystrix-stream&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-hystrix-dashboard:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;hystrix-dashboard&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;Consuming the metric stream is difficult to interpret on our own.  The metric stream can be visualized with the Hystrix Dashboard.&lt;/p&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/hystrix-dashboard/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-starter-hystrix-dashboard&lt;/code&gt; to the classpath this application exposes a Hystrix Dashboard.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.cloud&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;spring-cloud-starter-hystrix-dashboard&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/hystrix-dashboard/src/main/java/io/pivotal/HystrixDashboardApplication.java&lt;/code&gt;.  Note the use of the &lt;code&gt;@EnableHystrixDashboard&lt;/code&gt; annotation. This creates a Hystrix Dashboard.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableHystrixDashboard
+public class HystrixDashboardApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HystrixDashboardApplication.class, args);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Open a new terminal window. Start the &lt;code&gt;hystrix-dashboard&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/hystrix-dashboard
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Open a browser to &lt;a href=&#34;http://localhost:8686/hystrix&#34;&gt;http://localhost:8686/hystrix&lt;/a&gt;
+&lt;img src=&#34;images/hystrix-dashboard.png&#34; alt=&#34;hystrix-dashboard&#34; title=&#34;hystrix-dashboard&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;5) Link the &lt;code&gt;hystrix-dashboard&lt;/code&gt; to the &lt;code&gt;greeting-hystrix&lt;/code&gt; app.  Enter &lt;code&gt;http://localhost:8080/hystrix.stream&lt;/code&gt; as the stream to monitor.&lt;/p&gt;
+
+&lt;p&gt;6) Experiment! Refresh the &lt;code&gt;greeting-hystrix&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint several times.  Take down the &lt;code&gt;fortune-service&lt;/code&gt; app.  What does the dashboard do?  Review the &lt;a href=&#34;https://github.com/Netflix/Hystrix/wiki/Dashboard&#34;&gt;dashboard doc&lt;/a&gt; for an explanation on metrics.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/dashboard-activity.png&#34; alt=&#34;dashboard-activity&#34; title=&#34;dashboard-activity&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Client Side Load Balancing</title>
+      <link>/spring-cloud-services/scs/spring-cloud-netflix-client-side-load-balancing/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/spring-cloud-netflix-client-side-load-balancing/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 25 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Requirements&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;/spring-cloud-services/scs-sp1/requirements&#34;&gt;Lab Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to use Ribbon as a client side load balancer&lt;/li&gt;
+&lt;li&gt;How to use a Ribbon enabled &lt;code&gt;RestTemplate&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&#34;start-the-config-server-service-registry-and-fortune-service:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Start the  &lt;code&gt;config-server&lt;/code&gt;,  &lt;code&gt;service-registry&lt;/code&gt;, and &lt;code&gt;fortune-service&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Start the &lt;code&gt;config-server&lt;/code&gt; in a terminal window.  You may have terminal windows still open from previous labs.  They may be reused for this lab.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Start the &lt;code&gt;service-registry&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Start the &lt;code&gt;fortune-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;set-up-greeting-ribbon:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;greeting-ribbon&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;No additions to the pom.xml&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;In this case, we don&amp;rsquo;t need to explicitly include Ribbon support in the &lt;code&gt;pom.xml&lt;/code&gt;.  Ribbon support is pulled in through transitive dependencies (dependencies of the dependencies we have already defined).&lt;/p&gt;
+
+&lt;p&gt;1) Review the the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon/src/main/java/io/pivotal/greeting/GreetingController.java&lt;/code&gt;.  Notice the &lt;code&gt;loadBalancerClient&lt;/code&gt;.  It is a client side load balancer (Ribbon).  Review the &lt;code&gt;fetchFortuneServiceUrl()&lt;/code&gt; method.  Ribbon is integrated with Eureka so that it can discover services as well.  Notice how the &lt;code&gt;loadBalancerClient&lt;/code&gt; chooses a service instance by name.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private LoadBalancerClient loadBalancerClient;
+
+  @RequestMapping(&amp;quot;/&amp;quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&amp;quot;Adding greeting&amp;quot;);
+    model.addAttribute(&amp;quot;msg&amp;quot;, &amp;quot;Greetings!!!&amp;quot;);
+
+
+    RestTemplate restTemplate = new RestTemplate();
+    String fortune = restTemplate.getForObject(fetchFortuneServiceUrl(), String.class);
+
+    logger.debug(&amp;quot;Adding fortune&amp;quot;);
+    model.addAttribute(&amp;quot;fortune&amp;quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &amp;quot;greeting&amp;quot;;
+  }
+
+  private String fetchFortuneServiceUrl() {
+    ServiceInstance instance = loadBalancerClient.choose(&amp;quot;fortune-service&amp;quot;);
+
+    logger.debug(&amp;quot;uri: {}&amp;quot;, instance.getUri().toString());
+    logger.debug(&amp;quot;serviceId: {}&amp;quot;, instance.getServiceId());
+
+    return instance.getUri().toString();
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Open a new terminal window.  Start the &lt;code&gt;greeting-ribbon&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) After the a few moments, check the &lt;code&gt;service-registry&lt;/code&gt; dashboard &lt;a href=&#34;http://localhost:8761&#34;&gt;http://localhost:8761&lt;/a&gt;.  Confirm the &lt;code&gt;greeting-ribbon&lt;/code&gt; app is registered.&lt;/p&gt;
+
+&lt;p&gt;4) Browse to &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080/&lt;/a&gt; to the &lt;code&gt;greeting-ribbon&lt;/code&gt; application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the &lt;code&gt;greeting-ribbon&lt;/code&gt; app.  See the &lt;code&gt;uri&lt;/code&gt; and &lt;code&gt;serviceId&lt;/code&gt; being logged.&lt;/p&gt;
+
+&lt;p&gt;5) Stop the &lt;code&gt;greeting-ribbon&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-greeting-ribbon-rest:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;greeting-ribbon-rest&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;No additions to the pom.xml&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;In this case, we don&amp;rsquo;t need to explicitly include Ribbon support in the &lt;code&gt;pom.xml&lt;/code&gt;.  Ribbon support is pulled in through transitive dependencies (dependencies of the dependencies we have already defined).&lt;/p&gt;
+
+&lt;p&gt;1) Review the the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest/src/main/java/io/pivotal/GreetingRibbonRestApplication.java&lt;/code&gt;.  In addition to the standard &lt;code&gt;@EnableDiscoveryClient&lt;/code&gt; annotation, we&amp;rsquo;re also configuring a &lt;code&gt;RestTemplate&lt;/code&gt; bean.  It is not the usual &lt;code&gt;RestTemplate&lt;/code&gt;, it is load balanced by Ribbon.  The &lt;code&gt;@LoadBalanced&lt;/code&gt; annotation is a qualifier to ensure we get the load balanced &lt;code&gt;RestTemplate&lt;/code&gt; injected.  This further simplifies application code.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetingRibbonRestApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(GreetingRibbonRestApplication.class, args);
+  }
+
+  @LoadBalanced
+  @Bean
+  RestTemplate restTemplate() {
+    return new RestTemplate();
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest/src/main/java/io/pivotal/greeting/GreetingController.java&lt;/code&gt;.  Here we autowire the restTemplate we configured in the previous step.  Note also that the spring cloud API is smart enough to dynamically substitute the name of the service &lt;code&gt;fortune-service&lt;/code&gt; in the url parameter for &lt;code&gt;getForObject&lt;/code&gt; with its load-balanced, discovered url.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private RestTemplate restTemplate;
+
+  @RequestMapping(&amp;quot;/&amp;quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&amp;quot;Adding greeting&amp;quot;);
+    model.addAttribute(&amp;quot;msg&amp;quot;, &amp;quot;Greetings!!!&amp;quot;);
+
+    String fortune = restTemplate.getForObject(&amp;quot;http://fortune-service&amp;quot;, String.class);
+
+    logger.debug(&amp;quot;Adding fortune&amp;quot;);
+    model.addAttribute(&amp;quot;fortune&amp;quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &amp;quot;greeting&amp;quot;;
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Open a new terminal window.  Start the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) After the a few moments, check the &lt;code&gt;service-registry&lt;/code&gt; dashboard at &lt;a href=&#34;http://localhost:8761&#34;&gt;http://localhost:8761&lt;/a&gt;.  Confirm the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; app is registered.&lt;/p&gt;
+
+&lt;p&gt;4) Browse to &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080/&lt;/a&gt; to the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;p&gt;5) When done stop the &lt;code&gt;config-server&lt;/code&gt;, &lt;code&gt;service-registry&lt;/code&gt;, &lt;code&gt;fortune-service&lt;/code&gt; and &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; applications.&lt;/p&gt;
+
+&lt;h3 id=&#34;deploy-the-greeting-ribbon-rest-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; to PCF&lt;/h3&gt;
+
+&lt;p&gt;1) Package and push the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ mvn clean package
+$ cf push greeting-ribbon-rest -p target/greeting-ribbon-rest-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Bind services for the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf bind-service greeting-ribbon-rest config-server
+$ cf bind-service greeting-ribbon-rest service-registry
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;3) Set the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable for the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; application (our PCF instance is using self-signed SSL certificates).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf set-env greeting-ribbon-rest TRUST_CERTS &amp;lt;your api endpoint&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;4) Start the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf start greeting-ribbon-rest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) After the a few moments, check the &lt;code&gt;service-registry&lt;/code&gt;.  Confirm the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; app is registered.&lt;/p&gt;
+
+&lt;p&gt;6) Refresh the &lt;code&gt;greeting-ribbon-rest&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Note About This Lab&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;If services (e.g. &lt;code&gt;fortune-service&lt;/code&gt;) are registering using the first Cloud Foundry URI (using the &lt;code&gt;route&lt;/code&gt; registration method) this means that requests to them are being routed through the &lt;code&gt;router&lt;/code&gt; and subsequently load balanced at that layer.  Therefore, client side load balancing doesn&amp;rsquo;t occur.&lt;/p&gt;
+
+&lt;p&gt;Pivotal Cloud Foundry has recently added support for allowing cross container communication.  This will allow applications to communicate with each other without passing through the &lt;code&gt;router&lt;/code&gt;.  As applied to client-side load balancing, services such as &lt;code&gt;fortune-service&lt;/code&gt; would register with Eureka using their container IP addresses.  Allowing clients to reach them without going through the &lt;code&gt;router&lt;/code&gt;.  This is known as using the &lt;code&gt;direct&lt;/code&gt; registration method.&lt;/p&gt;
+
+&lt;p&gt;For more details, please read the &lt;a href=&#34;http://docs.pivotal.io/spring-cloud-services/1-2/service-registry/writing-client-applications.html#register-a-service&#34;&gt;following&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Service Discovery</title>
+      <link>/spring-cloud-services/scs/spring-cloud-netflix-service-discovery/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/spring-cloud-netflix-service-discovery/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 45 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Requirements&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;/spring-cloud-services/scs-sp1/requirements&#34;&gt;Lab Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to embed Eureka in a Spring Boot application&lt;/li&gt;
+&lt;li&gt;How to register services (&lt;code&gt;greeting-service&lt;/code&gt; and &lt;code&gt;fortune-service&lt;/code&gt;) with Eureka&lt;/li&gt;
+&lt;li&gt;How to discover services (&lt;code&gt;fortune-service&lt;/code&gt;) with Eureka&lt;/li&gt;
+&lt;li&gt;How to use Spring Cloud Services to provision a Service Registry&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;h3 id=&#34;set-up-the-app-config-repo:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up the &lt;code&gt;app-config&lt;/code&gt; Repo&lt;/h3&gt;
+
+&lt;p&gt;1) Create an &lt;code&gt;$APP_CONFIG_REPO_HOME/application.yml&lt;/code&gt; in your fork of the &lt;code&gt;app-config&lt;/code&gt; repo with the following contents:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging:
+  level:
+    io:
+      pivotal: DEBUG
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then commit and push back to Github.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;A note about the application.yml&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;When the &lt;code&gt;config-server&lt;/code&gt;&amp;rsquo;s backing repository contains an &lt;code&gt;application.yml&lt;/code&gt; it is shared with all applications.  Therefore, it is a great place to put common configuration for all applications.  In this case, we have dropped security on all the endpoints and setup logging.&lt;/p&gt;
+
+&lt;p&gt;In the &lt;a href=&#34;/spring-cloud-services/spring-cloud-services/spring-cloud-config&#34;&gt;Spring Cloud Config Lab&lt;/a&gt;, we used application specific configuration files:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;One based on the application name &lt;code&gt;greeting-config.yml&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;One based on the application name + profile &lt;code&gt;greeting-config-qa.yml&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Application specific files override configuration settings in the &lt;code&gt;application.yml&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-config-server:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;config-server&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Start the &lt;code&gt;config-server&lt;/code&gt; in a terminal window.  You may have a terminal window still open from the previous lab.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Verify the &lt;code&gt;config-server&lt;/code&gt; is up.  Open a browser and fetch &lt;a href=&#34;http://localhost:8888/myapp/default&#34;&gt;http://localhost:8888/myapp/default&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/restful-api.png&#34; alt=&#34;Config Server&#34; title=&#34;Config Server&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Note that a random application name was used and it picked up configuration from the &lt;code&gt;application.yml&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-service-registry:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;service-registry&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-starter-eureka-server&lt;/code&gt; to the classpath this application is eligible to embed an Eureka server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.cloud&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;spring-cloud-starter-eureka-server&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/src/main/java/io/pivotal/ServiceRegistryApplication.java&lt;/code&gt;.  Note the use of the &lt;code&gt;@EnableEurekaServer&lt;/code&gt; annotation that makes this application a Eureka server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableEurekaServer
+public class ServiceRegistryApplication {
+
+   public static void main(String[] args) {
+       SpringApplication.run(ServiceRegistryApplication.class, args);
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3). Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/src/main/resources/application.yml&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt; server:
+   port: 8761
+
+ eureka:
+   instance:
+     hostname: localhost
+   client:
+     registerWithEureka: false
+     fetchRegistry: false
+     serviceUrl:
+       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;About Eureka&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Eureka is designed for peer awareness (running multiple instances with knowledge of each other) to further increase availability.  Because of this, Eureka is not only a server but a client as well.  Therefore, Eureka Servers will be clients to each other.  &lt;code&gt;Eureka Server A&lt;/code&gt; ⇄ &lt;code&gt;Eureka Server B&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For the purposes of this lab, we will simplify that configuration to run in standalone mode.&lt;/p&gt;
+
+&lt;p&gt;Standalone mode still offers a high degree of resilience with:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Heartbeats between the client and server to keep registrations up to date&lt;/li&gt;
+&lt;li&gt;Client side caching, so that clients don&amp;rsquo;t go to Eureka for every lookup&lt;/li&gt;
+&lt;li&gt;By running in Pivotal Cloud Foundry which is designed to keep applications up by design&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With the above configuration, we have configured Eureka to run in standalone mode.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;Understanding the configuration parameters&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eureka.instance.hostname&lt;/code&gt; - the hostname for this service. In this case, what host to use to reach our standalone Eureka instance.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;eureka.client.registerWithEureka&lt;/code&gt; - should this application (our standalone Eureka instance) register with Eureka&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;eureka.client.fetchRegistry&lt;/code&gt; - should this application (our stand alone Eureka instance) fetch the registry (for how to discover services)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;eureka.client.serviceUrl.defaultZone&lt;/code&gt; - the Eureka instance to use for registering and discovering services.  Notice it is pointing to itself (&lt;code&gt;localhost&lt;/code&gt;, &lt;code&gt;8761&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;4) Open a new terminal window.  Start the &lt;code&gt;service-registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Verify the &lt;code&gt;service-registry&lt;/code&gt; is up.  Browse to &lt;a href=&#34;http://localhost:8761/&#34;&gt;http://localhost:8761/&lt;/a&gt;
+&lt;img src=&#34;images/eureka.png&#34; alt=&#34;eureka&#34; title=&#34;eureka&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-fortune-service:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;fortune-service&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/src/main/resources/bootstrap.yml&lt;/code&gt; file.  The name of this app is &lt;code&gt;fortune-service&lt;/code&gt;.  It also uses the &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt; server:
+   port: 8787
+ spring:
+   application:
+     name: fortune-service
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;spring.application.name&lt;/code&gt; is the name the application will use when registering with Eureka.&lt;/p&gt;
+
+&lt;p&gt;2) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-services-starter-service-registry&lt;/code&gt; to the classpath this application is eligible to register and discover services with the &lt;code&gt;service-registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;io.pivotal.spring.cloud&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-cloud-services-starter-service-registry&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/src/main/java/io/pivotal/FortuneServiceApplication.java&lt;/code&gt;.  Notice the &lt;code&gt;@EnableDiscoveryClient&lt;/code&gt;.  This enables a discovery client that registers the &lt;code&gt;fortune-service&lt;/code&gt; with the &lt;code&gt;service-registry&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableDiscoveryClient
+public class FortuneServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(FortuneServiceApplication.class, args);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Open a new terminal window.  Start the &lt;code&gt;fortune-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) After the a few moments, check the &lt;code&gt;service-registry&lt;/code&gt; dashboard.  Confirm the &lt;code&gt;fortune-service&lt;/code&gt; is registered.
+&lt;img src=&#34;images/fortune-service.png&#34; alt=&#34;fortune-service&#34; title=&#34;fortune-service&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The Eureka Dashboard may report a warning, because we aren&amp;rsquo;t setup with multiple peers.  This can safely be ignored.
+&lt;img src=&#34;images/warning.png&#34; alt=&#34;warning&#34; title=&#34;warning&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-greeting-service:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;greeting-service&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/resources/bootstrap.yml&lt;/code&gt; file.  The name of this app is &lt;code&gt;greeting-service&lt;/code&gt;.  It also uses the &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt; spring:
+   application:
+     name: greeting-service
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/pom.xml&lt;/code&gt; file.  By adding &lt;code&gt;spring-cloud-services-starter-service-registry&lt;/code&gt; to the classpath this application is eligible to register and discover services with the &lt;code&gt;service-registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;io.pivotal.spring.cloud&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-cloud-services-starter-service-registry&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/java/io/pivotal/GreetingServiceApplication.java&lt;/code&gt;.  Notice the &lt;code&gt;@EnableDiscoveryClient&lt;/code&gt;.   This enables a discovery client that registers the &lt;code&gt;greeting-service&lt;/code&gt; app with the &lt;code&gt;service-registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetingServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GreetingServiceApplication.class, args);
+    }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Review the the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/java/io/pivotal/greeting/GreetingController.java&lt;/code&gt;.  Notice the &lt;code&gt;DiscoveryClient&lt;/code&gt;.  &lt;code&gt;DiscoveryClient&lt;/code&gt; is used to discover services registered with the &lt;code&gt;service-registry&lt;/code&gt;.  See &lt;code&gt;fetchFortuneServiceUrl()&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private EurekaClient discoveryClient;
+
+  @RequestMapping(&amp;quot;/&amp;quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&amp;quot;Adding greeting&amp;quot;);
+    model.addAttribute(&amp;quot;msg&amp;quot;, &amp;quot;Greetings!!!&amp;quot;);
+
+    RestTemplate restTemplate = new RestTemplate();
+    String fortune = restTemplate.getForObject(fetchFortuneServiceUrl(), String.class);
+
+    logger.debug(&amp;quot;Adding fortune&amp;quot;);
+    model.addAttribute(&amp;quot;fortune&amp;quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &amp;quot;greeting&amp;quot;;
+  }
+
+  private String fetchFortuneServiceUrl() {
+    InstanceInfo instance = discoveryClient.getNextServerFromEureka(&amp;quot;FORTUNE-SERVICE&amp;quot;, false);
+    logger.debug(&amp;quot;instanceID: {}&amp;quot;, instance.getId());
+
+    String fortuneServiceUrl = instance.getHomePageUrl();
+    logger.debug(&amp;quot;fortune service homePageUrl: {}&amp;quot;, fortuneServiceUrl);
+
+    return fortuneServiceUrl;
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Open a new terminal window.  Start the &lt;code&gt;greeting-service&lt;/code&gt; app&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) After the a few moments, check the &lt;code&gt;service-registry&lt;/code&gt; dashboard &lt;a href=&#34;http://localhost:8761&#34;&gt;http://localhost:8761&lt;/a&gt;.  Confirm the &lt;code&gt;greeting-service&lt;/code&gt; app is registered.
+&lt;img src=&#34;images/greeting.png&#34; alt=&#34;greeting&#34; title=&#34;greeting&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;7) Browse to &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080/&lt;/a&gt; to the &lt;code&gt;greeting-service&lt;/code&gt; application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the &lt;code&gt;greeting-service&lt;/code&gt;.  See the &lt;code&gt;fortune-service&lt;/code&gt; &lt;code&gt;instanceId&lt;/code&gt; and &lt;code&gt;homePageUrl&lt;/code&gt; being logged.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;greeting-service&lt;/code&gt; application was able to discover how to reach the &lt;code&gt;fortune-service&lt;/code&gt; via the &lt;code&gt;service-registry&lt;/code&gt; (Eureka).&lt;/p&gt;
+
+&lt;p&gt;8) When done stop the &lt;code&gt;config-server&lt;/code&gt;, &lt;code&gt;service-registry&lt;/code&gt;, &lt;code&gt;fortune-service&lt;/code&gt; and &lt;code&gt;greeting-service&lt;/code&gt; applications.&lt;/p&gt;
+
+&lt;h3 id=&#34;optionally-update-app-config-for-fortune-service-and-greeting-service-to-run-on-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Optionally Update App Config for &lt;code&gt;fortune-service&lt;/code&gt; and &lt;code&gt;greeting-service&lt;/code&gt; to run on PCF&lt;/h3&gt;
+
+&lt;p&gt;1) You may specify the registration method to use for the applications using the &lt;code&gt;spring.cloud.services.registrationMethod&lt;/code&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;It can take either of two values:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;route&lt;/code&gt;: The application will be registered using its Cloud Foundry route (this is the default).&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;direct&lt;/code&gt;: The application will be registered using its host IP and port.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;direct&lt;/code&gt; registration method is only compatible with Pivotal Cloud Foundry version 1.5 or higher. In Pivotal Cloud Foundry Operations Manager, within the Pivotal Elastic Runtime tile’s Security Config, the “Enable cross-container traffic within each DEA” or “Enable cross-container traffic” option must be enabled.&lt;/p&gt;
+
+&lt;p&gt;When using the &lt;code&gt;direct&lt;/code&gt; registration method, requests from client applications to registered applications will not go through the Pivotal Cloud Foundry &lt;code&gt;router&lt;/code&gt;. You can utilize this with client-side load balancing techniques using &lt;a href=&#34;http://projects.spring.io/spring-cloud/docs/1.0.3/spring-cloud.html#spring-cloud-ribbon&#34;&gt;Spring Cloud and Netflix Ribbon&lt;/a&gt;. To read more on registration techniques go &lt;a href=&#34;http://docs.pivotal.io/spring-cloud-services/service-registry/registering-a-service.html&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Cross-container traffic has been enabled in our PCF instance.  In your fork of the &lt;code&gt;app-config&lt;/code&gt; repo add an additional section to the &lt;code&gt;$APP_CONFIG_REPO_HOME/application.yml&lt;/code&gt; file as seen below and push back to GitHub:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging:
+  level:
+    io:
+      pivotal: DEBUG
+
+spring: # &amp;lt;---NEW SECTION
+  cloud:
+    services:
+      registrationMethod: direct
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;deploy-the-fortune-service-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy the &lt;code&gt;fortune-service&lt;/code&gt; to PCF&lt;/h3&gt;
+
+&lt;p&gt;1) Package &lt;code&gt;fortune-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean package
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Deploy &lt;code&gt;fortune-service&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf push fortune-service -p target/fortune-service-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Create a Service Registry Service Instance.  The &lt;code&gt;service-registry&lt;/code&gt; service instance will not be immediately bindable.  It needs a few moments to initialize.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf create-service p-service-registry standard service-registry
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Click on the &lt;strong&gt;&lt;em&gt;Services&lt;/em&gt;&lt;/strong&gt; tab and the &lt;strong&gt;&lt;em&gt;Service Registry&lt;/em&gt;&lt;/strong&gt; entry to navigate to your service.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/services-service-registry.png&#34; alt=&#34;service&#34; title=&#34;services-service-registry&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then, click on the &lt;strong&gt;&lt;em&gt;Manage&lt;/em&gt;&lt;/strong&gt; link to determine when the &lt;code&gt;service-registry&lt;/code&gt; is ready.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/manage-service-registry.png&#34; alt=&#34;manage&#34; title=&#34;manage-service-registry&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;4) Bind services to the &lt;code&gt;fortune-service&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf bind-service fortune-service config-server
+$ cf bind-service fortune-service service-registry
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You will need to wait and try again if you see the following message when binding the &lt;code&gt;service-registry&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Binding service service-registry to app fortune-service in org dave / space dev as droberts@pivotal.io...
+FAILED
+Server error, status code: 502, error code: 10001, message: Service broker error: Service instance is not running and available for binding.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;5) Set the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable for the &lt;code&gt;fortune-service&lt;/code&gt; application (our PCF instance is using self-signed SSL certificates).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf set-env fortune-service TRUST_CERTS &amp;lt;your api endpoint&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;6) Start the &lt;code&gt;fortune-service&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf start fortune-service
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;7) Confirm &lt;code&gt;fortune-service&lt;/code&gt; registered with the &lt;code&gt;service-registry&lt;/code&gt;.  This will take a few moments.&lt;/p&gt;
+
+&lt;p&gt;Click on the &lt;strong&gt;&lt;em&gt;Manage&lt;/em&gt;&lt;/strong&gt; link for the &lt;code&gt;service-registry&lt;/code&gt;.  You can find it by navigating to the space where your applications are deployed.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/manage-service-registry.png&#34; alt=&#34;manage&#34; title=&#34;manage-service-registry&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/cf-fortune-service.png&#34; alt=&#34;fortune-service&#34; title=&#34;fortune-service&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;deploy-the-greeting-service-app-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy the &lt;code&gt;greeting-service&lt;/code&gt; app to PCF&lt;/h3&gt;
+
+&lt;p&gt;1) Package &lt;code&gt;greeting-service&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean package
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Deploy &lt;code&gt;greeting-service&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf push greeting-service -p target/greeting-service-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Bind services for the &lt;code&gt;greeting-service&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf bind-service greeting-service config-server
+$ cf bind-service greeting-service service-registry
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;4) If using self signed certificates, set the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable for the &lt;code&gt;greeting-service&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf set-env greeting-service TRUST_CERTS &amp;lt;your api endpoint&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  We don&amp;rsquo;t need to restage at this time.&lt;/p&gt;
+
+&lt;p&gt;5) Start the &lt;code&gt;greeting-service&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf start greeting-service
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) Confirm &lt;code&gt;greeting-service&lt;/code&gt; registered with the &lt;code&gt;service-registry&lt;/code&gt;.  This will take a few moments.
+&lt;img src=&#34;images/cf-greeting.png&#34; alt=&#34;greeting&#34; title=&#34;greeting&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;7) Browse to the &lt;code&gt;greeting-service&lt;/code&gt; application.  Confirm you are seeing fortunes.  Refresh as desired.&lt;/p&gt;
+
+&lt;h3 id=&#34;scale-the-fortune-service:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Scale the &lt;code&gt;fortune-service&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Scale the &lt;code&gt;fortune-service&lt;/code&gt; app instances to 3.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ cf scale fortune-service -i 3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Wait for the new instances to register with the &lt;code&gt;service-registry&lt;/code&gt;.  This will take a few moments.&lt;/p&gt;
+
+&lt;p&gt;3) Tail the logs for the &lt;code&gt;greeting-service&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;[mac, linux]
+$ cf logs greeting-service | grep GreetingController
+
+[windows]
+$ cf logs greeting-service
+$ # then search output for &amp;quot;GreetingController&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Refresh the &lt;code&gt;greeting-service&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint.&lt;/p&gt;
+
+&lt;p&gt;5) Observe the log output.  Compare the &lt;code&gt;instanceId&lt;/code&gt; and &lt;code&gt;homePageUrl&lt;/code&gt; being logged across log entries. The &lt;code&gt;discoveryClient&lt;/code&gt; round robins the &lt;code&gt;fortune-service&lt;/code&gt; instances.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-10-29T15:49:56.48-0500 [APP/0]      OUT 2015-10-29 20:49:56.481 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:56.49-0500 [APP/0]      OUT 2015-10-29 20:49:56.497 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.27:9f960352-f80b-4316-7577-61dd1815ac5f
+2015-10-29T15:49:56.49-0500 [APP/0]      OUT 2015-10-29 20:49:56.498 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.27:60028/
+2015-10-29T15:49:56.50-0500 [APP/0]      OUT 2015-10-29 20:49:56.507 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:57.72-0500 [APP/0]      OUT 2015-10-29 20:49:57.722 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:57.73-0500 [APP/0]      OUT 2015-10-29 20:49:57.737 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.28:72aa9f59-b27f-4d85-4323-2d79a9d7720c
+2015-10-29T15:49:57.73-0500 [APP/0]      OUT 2015-10-29 20:49:57.737 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.28:60026/
+2015-10-29T15:49:57.74-0500 [APP/0]      OUT 2015-10-29 20:49:57.745 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:58.66-0500 [APP/0]      OUT 2015-10-29 20:49:58.660 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:58.67-0500 [APP/0]      OUT 2015-10-29 20:49:58.672 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.29:e117fae6-b847-42c7-5286-8662a993351e
+2015-10-29T15:49:58.67-0500 [APP/0]      OUT 2015-10-29 20:49:58.673 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.29:60020/
+2015-10-29T15:49:58.68-0500 [APP/0]      OUT 2015-10-29 20:49:58.682 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:59.60-0500 [APP/0]      OUT 2015-10-29 20:49:59.609 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:59.62-0500 [APP/0]      OUT 2015-10-29 20:49:59.626 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.27:9f960352-f80b-4316-7577-61dd1815ac5f
+2015-10-29T15:49:59.62-0500 [APP/0]      OUT 2015-10-29 20:49:59.626 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.27:60028/
+2015-10-29T15:49:59.63-0500 [APP/0]      OUT 2015-10-29 20:49:59.637 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:50:00.54-0500 [APP/0]      OUT 2015-10-29 20:50:00.548 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:50:00.56-0500 [APP/0]      OUT 2015-10-29 20:50:00.564 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.28:72aa9f59-b27f-4d85-4323-2d79a9d7720c
+2015-10-29T15:50:00.56-0500 [APP/0]      OUT 2015-10-29 20:50:00.564 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.28:60026/
+2015-10-29T15:50:00.57-0500 [APP/0]      OUT 2015-10-29 20:50:00.572 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding fortune
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you are not seeing this behavior, make sure that your logging level is set to &lt;code&gt;DEBUG&lt;/code&gt; and you have refreshed the configurations for the greeting service.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;greeting-service&lt;/code&gt; and &lt;code&gt;fortune-service&lt;/code&gt; both registered with the &lt;code&gt;service-registry&lt;/code&gt; (Eureka).  The &lt;code&gt;greeting-service&lt;/code&gt; was able to locate the &lt;code&gt;fortune-service&lt;/code&gt; via the &lt;code&gt;service-registry&lt;/code&gt;.  The &lt;code&gt;greeting-service&lt;/code&gt; round robins requests to all the &lt;code&gt;fortune-service&lt;/code&gt; instances.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring Cloud Config</title>
+      <link>/spring-cloud-services/scs/spring-cloud-config/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/spring-cloud-config/</guid>
+      <description>
+
+&lt;hr /&gt;
+
+&lt;p&gt;Estimated Time: 60 minutes&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;requirements:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Requirements&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;/spring-cloud-services/scs-sp1/requirements&#34;&gt;Lab Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;What You Will Learn&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to set up a git repository to hold configuration data&lt;/li&gt;
+&lt;li&gt;How to set up a config server (&lt;code&gt;config-server&lt;/code&gt;) with a git backend&lt;/li&gt;
+&lt;li&gt;How to set up a client (&lt;code&gt;greeting-config&lt;/code&gt;) to pull configuration from the &lt;code&gt;config-server&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;How to change log levels for a running application (&lt;code&gt;greeting-config&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;How to use &lt;code&gt;@ConfigurationProperties&lt;/code&gt; to capture configuration changes (&lt;code&gt;greeting-config&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;How to use &lt;code&gt;@RefreshScope&lt;/code&gt; to capture configuration changes (&lt;code&gt;greeting-config&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;How to override configuration values by profile (&lt;code&gt;greeting-config&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;How to use Spring Cloud Service to provision and configure a Config Server&lt;/li&gt;
+&lt;li&gt;How to use Cloud Bus to notify applications (&lt;code&gt;greeting-config&lt;/code&gt;) to refresh configuration at scale&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&#34;exercises:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Exercises&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&#34;set-up-the-app-config-repo:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up the &lt;code&gt;app-config&lt;/code&gt; Repo&lt;/h3&gt;
+
+&lt;p&gt;To start, we need a repository to hold our configuration.&lt;/p&gt;
+
+&lt;p&gt;1) Fork the configuration repo to your account.  Browse to: &lt;a href=&#34;https://github.com/pivotal-enablement/app-config&#34;&gt;https://github.com/pivotal-enablement/app-config&lt;/a&gt;.  Then fork the repo.
+&lt;img src=&#34;images/fork.png&#34; alt=&#34;fork&#34; title=&#34;fork&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;2) GitHub displays your new fork. Copy the HTTPS clone URL from your fork.&lt;/p&gt;
+
+&lt;p&gt;3) Open a new terminal window and clone the fork you just created (you may want to create a common location for your GitHub repos, such as ~/repos):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd [location of your github repos, e.g. ~/repos]
+$ git clone &amp;lt;Your fork of the app-config repo - HTTPS clone URL&amp;gt;
+$ cd app-config
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice that this repository is basically empty. This repository will be the source of configuration data.&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-config-server:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;config-server&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/config-server/pom.xml&lt;/code&gt;
+By adding &lt;code&gt;spring-cloud-config-server&lt;/code&gt; to the classpath, this application is eligible to embed a &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.cloud&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;spring-cloud-config-server&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the following file:&lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/config-server/src/main/java/io/pivotal/ConfigServerApplication.java&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note the &lt;code&gt;@EnableConfigServer&lt;/code&gt; annotation.  That embeds the &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;3) Set the GitHub repository for the &lt;code&gt;config-server&lt;/code&gt;. This will be the source of the configuration data. &lt;em&gt;Edit the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/config-server/src/main/resources/application.yml&lt;/code&gt; file.&lt;/em&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;server:
+  port: 8888
+
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/d4v3r/app-config.git #&amp;lt;-- CHANGE ME
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make sure to substitute your forked &lt;code&gt;app-config&lt;/code&gt; repository. Do not use the literal above.&lt;/p&gt;
+
+&lt;p&gt;4) Open a terminal window and start the &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Your &lt;code&gt;config-server&lt;/code&gt; will be running locally once you see a &amp;ldquo;Started ConfigServerApplication&amp;hellip;&amp;rdquo; message. You
+will not be returned to a command prompt and must leave this window open.&lt;/p&gt;
+
+&lt;p&gt;5) Let&amp;rsquo;s add some configuration.  Edit your fork of the &lt;code&gt;app-config&lt;/code&gt; repo.  Create a file called &lt;code&gt;hello-world.yml&lt;/code&gt;.  Add the content below to the file and push the changes back to GitHub.  Be sure to substitute your name for &lt;code&gt;&amp;lt;Your name&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;name: &amp;lt;Your Name&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) Confirm the &lt;code&gt;config-server&lt;/code&gt; is up and configured with a backing git repository by calling one of its &lt;a href=&#34;http://projects.spring.io/spring-cloud/docs/1.0.3/spring-cloud.html#_quick_start&#34;&gt;endpoints&lt;/a&gt;.  Because the returned payload is JSON, we recommend using something that will pretty-print the document.  A good tool for this is the Chrome &lt;a href=&#34;https://chrome.google.com/webstore/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa?hl=en&#34;&gt;JSON Formatter&lt;/a&gt; plug-in.&lt;/p&gt;
+
+&lt;p&gt;Open a browser window and fetch the following url: &lt;a href=&#34;http://localhost:8888/hello-world/default&#34;&gt;http://localhost:8888/hello-world/default&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/api.png&#34; alt=&#34;Config Server - API&#34; title=&#34;Config Server - API&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;config-server&lt;/code&gt; exposes several &lt;a href=&#34;http://projects.spring.io/spring-cloud/docs/1.0.3/spring-cloud.html#_quick_start&#34;&gt;endpoints&lt;/a&gt; to fetch configuration.&lt;/p&gt;
+
+&lt;p&gt;In this case, we are manually calling one of those endpoints (&lt;code&gt;/{application}/{profile}[/{label}]&lt;/code&gt;) to fetch configuration.  We substituted our example client application &lt;code&gt;hello-world&lt;/code&gt; as the &lt;code&gt;{application}&lt;/code&gt; and the &lt;code&gt;default&lt;/code&gt; profile as the &lt;code&gt;{profile}&lt;/code&gt;.  We didn&amp;rsquo;t specify the label to use so &lt;code&gt;master&lt;/code&gt; is assumed.  In the returned document, we see the configuration file &lt;code&gt;hello-world.yml&lt;/code&gt; listed as a &lt;code&gt;propertySource&lt;/code&gt; with the associated key/value pair.  This is just an example, as you move through the lab you will add configuration for &lt;code&gt;greeting-config&lt;/code&gt; (our client application).&lt;/p&gt;
+
+&lt;h3 id=&#34;set-up-greeting-config:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up &lt;code&gt;greeting-config&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;1) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/pom.xml&lt;/code&gt;
+By adding &lt;code&gt;spring-cloud-services-starter-config-client&lt;/code&gt; to the classpath, this application will consume configuration from the &lt;code&gt;config-server&lt;/code&gt;.  &lt;code&gt;greeting-config&lt;/code&gt; is a config client.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+	&amp;lt;groupId&amp;gt;io.pivotal.spring.cloud&amp;lt;/groupId&amp;gt;
+	&amp;lt;artifactId&amp;gt;spring-cloud-services-starter-config-client&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review the &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/resources/bootstrap.yml&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;spring:
+  application:
+    name: greeting-config
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;spring.application.name&lt;/code&gt; defines the name of the application.  This value is used in several places within Spring Cloud: locating configuration files by name, service discovery/registration by name, etc.  In this lab, it will be used to locate config files for the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;Absent from the bootstrap.yml is the &lt;code&gt;spring.cloud.config.uri&lt;/code&gt;, which defines how &lt;code&gt;greeting-config&lt;/code&gt; reaches the &lt;code&gt;config-server&lt;/code&gt;. Since there is no &lt;code&gt;spring.cloud.config.uri&lt;/code&gt; defined in this file, the default value of &lt;code&gt;http://localhost:8888&lt;/code&gt; is used.  Notice that this is the same host and port of the &lt;code&gt;config-server&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;3) Open a new terminal window.  Start the &lt;code&gt;greeting-config&lt;/code&gt; application:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Confirm the &lt;code&gt;greeting-config&lt;/code&gt; app is up.  Browse to &lt;a href=&#34;http://localhost:8080&#34;&gt;http://localhost:8080&lt;/a&gt;.  You should be prompted to authenticate.  Why?  &lt;code&gt;spring-cloud-services-starter-config-client&lt;/code&gt; has a dependency on &lt;a href=&#34;http://projects.spring.io/spring-security/&#34;&gt;Spring Security&lt;/a&gt;.  Unless the given application has other security configuration, this will cause all application and actuator endpoints to be protected by HTTP Basic authentication.&lt;/p&gt;
+
+&lt;p&gt;5) If no explicit username or password has been set then Spring Security will generate one for you.  This is applies for the &lt;code&gt;greeting-config&lt;/code&gt; application.  Use the following to login:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;username:&lt;/em&gt;&lt;/strong&gt; &lt;code&gt;user&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;password:&lt;/em&gt;&lt;/strong&gt; You can find this in the terminal output.  Look for a log message similar to the following: &lt;code&gt;Using default security password: 90a3ef2a-4e98-4491-a528-a47a7162dd2a&lt;/code&gt;.  Use this password to login.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;Note:&lt;/em&gt;&lt;/strong&gt; Username and password can be explicitly set through the &lt;code&gt;security.user.name&lt;/code&gt; and &lt;code&gt;security.user.password&lt;/code&gt; configuration parameters.&lt;/p&gt;
+
+&lt;p&gt;6) After logging in you should see the message &amp;ldquo;Greetings!!!&amp;rdquo;.
+&lt;img src=&#34;images/greeting-config.png&#34; alt=&#34;greeting-config&#34; title=&#34;greeting-config&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;At this point, you connected the &lt;code&gt;greeting-config&lt;/code&gt; application with the &lt;code&gt;config-server&lt;/code&gt;.  This can be confirmed by reviewing the logs of the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;greeting-config&lt;/code&gt; log output:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-09-18 13:48:50.147  INFO 15706 --- [lication.main()] b.c.PropertySourceBootstrapConfiguration :
+Located property source: CompositePropertySource [name=&#39;configService&#39;, propertySources=[]]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There is still no configuration in the git repo for the &lt;code&gt;greeting-config&lt;/code&gt; application, but at this point we have everything wired (&lt;code&gt;greeting-config&lt;/code&gt; → &lt;code&gt;config-server&lt;/code&gt; → &lt;code&gt;app-config&lt;/code&gt; repo) so we can add configuration parameters/values and see the effects in out client application &lt;code&gt;greeting-config&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Configuration parameters/values will be added as we move through the lab.&lt;/p&gt;
+
+&lt;p&gt;7) Stop the &lt;code&gt;greeting-config&lt;/code&gt; application&lt;/p&gt;
+
+&lt;h3 id=&#34;unsecure-the-endpoints:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Unsecure the Endpoints&lt;/h3&gt;
+
+&lt;p&gt;For these labs we don&amp;rsquo;t need Spring Security&amp;rsquo;s default behavior of securing every endpoint.  This will be our first example of using the &lt;code&gt;config-server&lt;/code&gt; to provide configuration for the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;1) Edit your fork of the &lt;code&gt;app-config&lt;/code&gt; repo.  Create a file called &lt;code&gt;greeting-config.yml&lt;/code&gt;.  Add the content below to the file and push the changes back to GitHub.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;security:
+  basic:
+    enabled: false # turn off securing our application endpoints
+
+management:
+  security:
+    enabled: false # turn off securing the actuator endpoints
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Browse to &lt;a href=&#34;http://localhost:8888/greeting-config/default&#34;&gt;http://localhost:8888/greeting-config/default&lt;/a&gt; to review the configuration the  &lt;code&gt;config-server&lt;/code&gt; is providing for &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/security.png&#34; alt=&#34;security&#34; title=&#34;security&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;3) Start the &lt;code&gt;greeting-config&lt;/code&gt; application:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Review the logs for the &lt;code&gt;greeting-config&lt;/code&gt; application.  You can see that configuration is being sourced from the &lt;code&gt;greeting-config.yml&lt;/code&gt; file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-11-02 08:57:32.962  INFO 58597 --- [lication.main()] b.c.PropertySourceBootstrapConfiguration : Located property source: CompositePropertySource [name=&#39;configService&#39;, propertySources=[MapPropertySource [name=&#39;https://github.com/d4v3r/app-config.git/greeting-config.yml&#39;]]]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Browse to &lt;a href=&#34;http://localhost:8080&#34;&gt;http://localhost:8080&lt;/a&gt;.  You should no longer be prompted to authenticate.&lt;/p&gt;
+
+&lt;h3 id=&#34;changing-logging-levels:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Changing Logging Levels&lt;/h3&gt;
+
+&lt;p&gt;Next you will change the logging level of the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;p&gt;1) View the &lt;code&gt;getGreeting()&lt;/code&gt; method of the &lt;code&gt;GreetingController&lt;/code&gt; class (&lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/java/io/pivotal/greeting/GreetingController.java&lt;/code&gt;).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@RequestMapping(&amp;quot;/&amp;quot;)
+String getGreeting(Model model){
+
+  logger.debug(&amp;quot;Adding greeting&amp;quot;);
+  model.addAttribute(&amp;quot;msg&amp;quot;, &amp;quot;Greetings!!!&amp;quot;);
+
+  if(greetingProperties.isDisplayFortune()){
+    logger.debug(&amp;quot;Adding fortune&amp;quot;);
+    model.addAttribute(&amp;quot;fortune&amp;quot;, fortuneService.getFortune());
+  }
+
+  //resolves to the greeting.vm velocity template
+  return &amp;quot;greeting&amp;quot;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We want to see these debug messages.  By default only log levels of &lt;code&gt;ERROR&lt;/code&gt;, &lt;code&gt;WARN&lt;/code&gt; and &lt;code&gt;INFO&lt;/code&gt; will be logged. You will change the log level to &lt;code&gt;DEBUG&lt;/code&gt; using
+configuration. All log output will be directed to &lt;code&gt;System.out&lt;/code&gt; &amp;amp; &lt;code&gt;System.error&lt;/code&gt; by default, so logs will be output to the terminal window(s).&lt;/p&gt;
+
+&lt;p&gt;2) In your fork of the &lt;code&gt;app-config&lt;/code&gt; repo.  Add the content below to the &lt;code&gt;greeting-config.yml&lt;/code&gt; file and push the changes back to GitHub.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging: # &amp;lt;----New sections below
+  level:
+    io:
+      pivotal: DEBUG
+
+greeting:
+  displayFortune: false
+
+quoteServiceURL: http://quote-service-dev.cfapps.io/quote
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We have added several configuration parameters that will be used throughout this lab.  For this exercise, we have set the log level for classes in the &lt;code&gt;io.pivotal&lt;/code&gt; package to &lt;code&gt;DEBUG&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;3) While watching the &lt;code&gt;greeting-config&lt;/code&gt; terminal, refresh the &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080&lt;/a&gt; url.  Notice there are no &lt;code&gt;DEBUG&lt;/code&gt; logs yet.&lt;/p&gt;
+
+&lt;p&gt;4) Does the &lt;code&gt;config-server&lt;/code&gt; see the change in your git repo?  Let&amp;rsquo;s check what the &lt;code&gt;config-server&lt;/code&gt; is serving.  Browse to &lt;a href=&#34;http://localhost:8888/greeting-config/default&#34;&gt;http://localhost:8888/greeting-config/default&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/updated-config.png&#34; alt=&#34;updated-config&#34; title=&#34;updated-config&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The propertySources value has changed!  The &lt;code&gt;config-server&lt;/code&gt; has picked up the changes to the git repo. (If you don&amp;rsquo;t see the change,
+verify that you have pushed the greeting-config.yml to GitHub.)&lt;/p&gt;
+
+&lt;p&gt;5) Review the following file: &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/pom.xml&lt;/code&gt;.  For the &lt;code&gt;greeting-config&lt;/code&gt; application to pick up the configuration changes, it must include the &lt;code&gt;actuator&lt;/code&gt; dependency.  The &lt;code&gt;actuator&lt;/code&gt; adds several additional endpoints to the application for operational visibility and tasks that need to be carried out.  In this case, we have added the actuator so that we can use the &lt;code&gt;/refresh&lt;/code&gt; endpoint, which allows us to refresh the application config on demand.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.boot&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;spring-boot-starter-actuator&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) For the &lt;code&gt;greeting-config&lt;/code&gt; application to pick up the configuration changes, it must be told to do so.  Notify &lt;code&gt;greeting-config&lt;/code&gt; app to pick up the new config by POSTing to the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/refresh&lt;/code&gt; endpoint.  Open a new terminal window and execute the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ curl -X POST http://localhost:8080/refresh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;7) Refresh the &lt;code&gt;greeting-config&lt;/code&gt; &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080&lt;/a&gt; url while viewing the &lt;code&gt;greeting-config&lt;/code&gt; terminal.  You should see the debug line &amp;ldquo;Adding greeting&amp;rdquo;&lt;/p&gt;
+
+&lt;p&gt;Congratulations! You have used the &lt;code&gt;config-server&lt;/code&gt; and &lt;code&gt;actuator&lt;/code&gt; to change the logging level of the &lt;code&gt;greeting-config&lt;/code&gt; application without restarting the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+
+&lt;h3 id=&#34;turning-on-a-feature-with-configurationproperties:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Turning on a Feature with &lt;code&gt;@ConfigurationProperties&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;Use of &lt;code&gt;@ConfigurationProperties&lt;/code&gt; is a common way to externalize, group, and validate configuration in Spring applications.  &lt;code&gt;@ConfigurationProperties&lt;/code&gt; beans are automatically rebound when application config is refreshed.&lt;/p&gt;
+
+&lt;p&gt;1) Review &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/java/io/pivotal/greeting/GreetingProperties.java&lt;/code&gt;.  Use of the &lt;code&gt;@ConfigurationProperties&lt;/code&gt; annotation allows for reading of configuration values.  Configuration keys are a combination of the &lt;code&gt;prefix&lt;/code&gt; and the field names.  In this case, there is one field (&lt;code&gt;displayFortune&lt;/code&gt;).  Therefore &lt;code&gt;greeting.displayFortune&lt;/code&gt; is used to turn the display of fortunes on/off.  Remaining code is typical getter/setters for the fields.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@ConfigurationProperties(prefix=&amp;quot;greeting&amp;quot;)
+public class GreetingProperties {
+
+	private boolean displayFortune;
+
+	public boolean isDisplayFortune() {
+		return displayFortune;
+	}
+
+	public void setDisplayFortune(boolean displayFortune) {
+		this.displayFortune = displayFortune;
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/java/io/pivotal/greeting/GreetingController.java&lt;/code&gt;.  Note how the &lt;code&gt;greetingProperties.isDisplayFortune()&lt;/code&gt; is used to turn the display of fortunes on/off.  There are times when you want to turn features on/off on demand.  In this case, we want the fortune feature &amp;ldquo;on&amp;rdquo; with our greeting.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Controller
+@EnableConfigurationProperties(GreetingProperties.class)
+public class GreetingController {
+
+	Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+	@Autowired
+	GreetingProperties greetingProperties;
+
+	@Autowired
+	FortuneService fortuneService;
+
+	@RequestMapping(&amp;quot;/&amp;quot;)
+	String getGreeting(Model model){
+
+		logger.debug(&amp;quot;Adding greeting&amp;quot;);
+		model.addAttribute(&amp;quot;msg&amp;quot;, &amp;quot;Greetings!!!&amp;quot;);
+
+		if(greetingProperties.isDisplayFortune()){
+			logger.debug(&amp;quot;Adding fortune&amp;quot;);
+			model.addAttribute(&amp;quot;fortune&amp;quot;, fortuneService.getFortune());
+		}
+
+		//resolves to the greeting.vm velocity template
+		return &amp;quot;greeting&amp;quot;;
+	}
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Edit your fork of the &lt;code&gt;app-config&lt;/code&gt; repo.   Change &lt;code&gt;greeting.displayFortune&lt;/code&gt; from &lt;code&gt;false&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt; in the &lt;code&gt;greeting-config.yml&lt;/code&gt; and push the changes back to GitHub.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging:
+  level:
+    io:
+      pivotal: DEBUG
+
+greeting:
+  displayFortune: true # &amp;lt;----Change to true
+
+quoteServiceURL: http://quote-service-dev.cfapps.io/quote
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Notify &lt;code&gt;greeting-config&lt;/code&gt; app to pick up the new config by POSTing to the &lt;code&gt;/refresh&lt;/code&gt; endpoint.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ curl -X POST http://localhost:8080/refresh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Then refresh the &lt;a href=&#34;http://localhost:8080/&#34;&gt;http://localhost:8080&lt;/a&gt; url and see the fortune included.&lt;/p&gt;
+
+&lt;p&gt;Congratulations! You have turned on a feature without restarting using the &lt;code&gt;config-server&lt;/code&gt;, &lt;code&gt;actuator&lt;/code&gt; and &lt;code&gt;@ConfigurationProperties&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;reinitializing-beans-with-refreshscope:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Reinitializing Beans with &lt;code&gt;@RefreshScope&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;Now you will use the &lt;code&gt;config-server&lt;/code&gt; to obtain a service URI rather than hardcoding it in your application code.&lt;/p&gt;
+
+&lt;p&gt;Beans annotated with the &lt;code&gt;@RefreshScope&lt;/code&gt; will be recreated when refreshed so they can pick up new config values.&lt;/p&gt;
+
+&lt;p&gt;1) Review &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/java/io/pivotal/quote/QuoteService.java&lt;/code&gt;.  &lt;code&gt;QuoteService&lt;/code&gt; uses the &lt;code&gt;@RefreshScope&lt;/code&gt; annotation. Beans with the &lt;code&gt;@RefreshScope&lt;/code&gt; annotation will be recreated when refreshing configuration.  The &lt;code&gt;@Value&lt;/code&gt; annotation allows for injecting the value of the &lt;code&gt;quoteServiceURL&lt;/code&gt; configuration parameter.&lt;/p&gt;
+
+&lt;p&gt;In this case, we are using a third party service to get quotes.  We want to keep our environments aligned with the third party.  So we are going to override configuration values by profile (next section).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Service
+@RefreshScope
+public class QuoteService {
+	Logger logger = LoggerFactory.getLogger(QuoteController.class);
+
+	@Value(&amp;quot;${quoteServiceURL:}&amp;quot;)
+	private String quoteServiceURL;
+
+	public String getQuoteServiceURI() {
+		return quoteServiceURL;
+	}
+
+	public Quote getQuote(){
+		logger.info(&amp;quot;quoteServiceURL: {}&amp;quot;, quoteServiceURL);
+		RestTemplate restTemplate = new RestTemplate();
+		Quote quote = restTemplate.getForObject(quoteServiceURL, Quote.class);
+		return quote;
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Review &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/src/main/java/io/pivotal/quote/QuoteController.java&lt;/code&gt;.  &lt;code&gt;QuoteController&lt;/code&gt; calls the &lt;code&gt;QuoteService&lt;/code&gt; for quotes.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Controller
+public class QuoteController {
+
+	Logger logger = LoggerFactory.getLogger(QuoteController.class);
+
+	@Autowired
+	private QuoteService quoteService;
+
+	@RequestMapping(&amp;quot;/random-quote&amp;quot;)
+	String getView(Model model) {
+		model.addAttribute(&amp;quot;quote&amp;quot;, quoteService.getQuote());
+		model.addAttribute(&amp;quot;uri&amp;quot;, quoteService.getQuoteServiceURI());
+		return &amp;quot;quote&amp;quot;;
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) In your browser, hit the &lt;a href=&#34;http://localhost:8080/random-quote&#34;&gt;http://localhost:8080/random-quote&lt;/a&gt; url.&lt;br /&gt;
+Note where the data is being served from: &lt;code&gt;http://quote-service-dev.cfapps.io/quote&lt;/code&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;override-configuration-values-by-profile:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Override Configuration Values By Profile&lt;/h3&gt;
+
+&lt;p&gt;1) Stop the &lt;code&gt;greeting-config&lt;/code&gt; application using CTRL-C in the terminal window.&lt;/p&gt;
+
+&lt;p&gt;2) Set the active profile to qa for the &lt;code&gt;greeting-config&lt;/code&gt; application.  In the example below, we use an environment variable to set the active profile.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;[mac, linux]
+$ SPRING_PROFILES_ACTIVE=qa mvn clean spring-boot:run
+
+[windows]
+$ set SPRING_PROFILES_ACTIVE=qa
+$ mvn clean spring-boot:run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Make sure the profile is set by browsing to the &lt;a href=&#34;http://localhost:8080/env&#34;&gt;http://localhost:8080/env&lt;/a&gt; endpoint (provided by &lt;code&gt;actuator&lt;/code&gt;).  Under profiles &lt;code&gt;qa&lt;/code&gt; should be listed.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/profile.png&#34; alt=&#34;profile&#34; title=&#34;qa profile&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;3) In your fork of the &lt;code&gt;app-config&lt;/code&gt; repository, create a new file: &lt;code&gt;greeting-config-qa.yml&lt;/code&gt;. Fill it in with the following content:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;quoteServiceURL: http://quote-service-qa.cfapps.io/quote
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make sure to commit and push to GitHub.&lt;/p&gt;
+
+&lt;p&gt;4) Browse to &lt;a href=&#34;http://localhost:8080/random-quote&#34;&gt;http://localhost:8080/random-quote&lt;/a&gt;.  Quotes are still being served from &lt;code&gt;http://quote-service-dev.cfapps.io/quote&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;5) Refresh the application configuration values&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ curl -X POST http://localhost:8080/refresh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;6) Refresh the &lt;a href=&#34;http://localhost:8080/random-quote&#34;&gt;http://localhost:8080/random-quote&lt;/a&gt; url.  Quotes are now being served from QA.&lt;/p&gt;
+
+&lt;p&gt;7) Stop both the &lt;code&gt;config-server&lt;/code&gt; and &lt;code&gt;greeting-config&lt;/code&gt; applications.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;What Just Happened?&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Configuration from &lt;code&gt;greeting-config.yml&lt;/code&gt; was overridden by a configuration file that was more specific (&lt;code&gt;greeting-config-qa.yml&lt;/code&gt;).&lt;/p&gt;
+
+&lt;h3 id=&#34;deploy-the-greeting-config-application-to-pcf:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Deploy the &lt;code&gt;greeting-config&lt;/code&gt; Application to PCF&lt;/h3&gt;
+
+&lt;p&gt;1) Package the &lt;code&gt;greeting-config&lt;/code&gt; application. Execute the following from the &lt;code&gt;greeting-config&lt;/code&gt; directory:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean package
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2) Deploy the &lt;code&gt;greeting-config&lt;/code&gt; application to PCF, without starting the application:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf push greeting-config -p target/greeting-config-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Create a Config Server Service Instance&lt;/p&gt;
+
+&lt;p&gt;Using the cf cli, do the following (for help review the &lt;a href=&#34;http://docs.pivotal.io/spring-cloud-services/config-server/creating-an-instance.html&#34;&gt;docs&lt;/a&gt;):&lt;/p&gt;
+
+&lt;p&gt;Create a config server:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf create-service p-config-server standard config-server -c ./cfg-svr-config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;where the contents of the file &lt;code&gt;cfg-svr-config.json&lt;/code&gt; should look something like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;git&amp;quot;: { &amp;quot;uri&amp;quot;: &amp;quot;https://github.com/&amp;lt;username&amp;gt;/app-config.git&amp;quot; } }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Feel free to name your service anything you like, it doesn&amp;rsquo;t have to be named &lt;code&gt;config-server&lt;/code&gt;. The Config Server instance will take a few moments to initialize and then be ready for use.&lt;/p&gt;
+
+&lt;p&gt;You can invoke either the &lt;code&gt;cf services&lt;/code&gt; or &lt;code&gt;cf service&lt;/code&gt; commands to view the status of the service you just created.&lt;/p&gt;
+
+&lt;p&gt;In addition, you can visit your Config Server&amp;rsquo;s service dashboard in the Apps Manager to view its configuration and status:&lt;/p&gt;
+
+&lt;p&gt;In a browser, navigate to the apps manager, and to your space.  You should see your config server service displayed in there (it may be in a separate tab named &lt;code&gt;services&lt;/code&gt;).  Click on the service, and in the subsequent view, select the &lt;code&gt;Manage&lt;/code&gt; link.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/dashboard.png&#34; alt=&#34;dashboard&#34; title=&#34;dashboard&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;4) Bind the &lt;code&gt;config-server&lt;/code&gt; service to the &lt;code&gt;greeting-config&lt;/code&gt; app. This will enable the &lt;code&gt;greeting-config&lt;/code&gt; app to read
+configuration values from the &lt;code&gt;config-server&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf bind-service greeting-config config-server
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  Our app doesn&amp;rsquo;t need to be restaged at this time because it isn&amp;rsquo;t currently running.&lt;/p&gt;
+
+&lt;p&gt;5) Our PCF instance is using self-signed SSL certificates.  Set the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable to API endpoint of your Elastic Runtime instance.  You can quickly retrieve the API endpoint by running the command &lt;code&gt;cf api&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;cf set-env greeting-config TRUST_CERTS &amp;lt;your api endpoint&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Be sure to specify the api endpoint as a hostname and not a url, i.e. without the leading &lt;code&gt;https://&lt;/code&gt; scheme.
+You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  Our app doesn&amp;rsquo;t need to be restaged at this time.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;NOTE:&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;All communication between Spring Cloud Services components are made through HTTPS. If you are on an environment that uses self-signed certs, the Java SSL trust store will not have those certificates.  By adding the &lt;code&gt;TRUST_CERTS&lt;/code&gt; environment variable a trusted domain is added to the Java trust store.  For more information see the &lt;a href=&#34;https://docs.pivotal.io/spring-cloud-services/config-server/writing-client-applications.html#self-signed-ssl-certificate&#34;&gt;this portion&lt;/a&gt; of the SCS documentation.&lt;/p&gt;
+
+&lt;p&gt;6) Start the &lt;code&gt;greeting-config&lt;/code&gt; app.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf start greeting-config
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;7) Browse to your &lt;code&gt;greeting-config&lt;/code&gt; application.  Are your configuration settings that were set when developing locally mirrored on PCF?&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Is the log level for &lt;code&gt;io.pivotal&lt;/code&gt; package set to &lt;code&gt;DEBUG&lt;/code&gt;?  Yes, this can be confirmed with &lt;code&gt;cf logs&lt;/code&gt; command while refreshing the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint (&lt;code&gt;http://&amp;lt;your-random-greeting-config-url/&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;Is &lt;code&gt;greeting-config&lt;/code&gt; app displaying the fortune?  Yes, this can be confirmed by visiting the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint.&lt;/li&gt;
+&lt;li&gt;Is the &lt;code&gt;greeting-config&lt;/code&gt; app serving quotes from &lt;code&gt;http://quote-service-qa.cfapps.io/quote&lt;/code&gt;?  No, this can be confirmed by visiting the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/random-quote&lt;/code&gt; endpoint.  Why not?  When developing locally we used an environment variable to set the active profile, we need to do the same on PCF.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf set-env greeting-config SPRING_PROFILES_ACTIVE qa
+$ cf restart greeting-config
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  Our app doesn&amp;rsquo;t need to be restaged but just re-started.&lt;/p&gt;
+
+&lt;p&gt;Then confirm quotes are being served from &lt;code&gt;http://quote-service-qa.cfapps.io/quote&lt;/code&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;refreshing-application-configuration-at-scale-with-cloud-bus:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Refreshing Application Configuration at Scale with Cloud Bus&lt;/h3&gt;
+
+&lt;p&gt;Until now you have been notifying your application to pick up new configuration by POSTing to the &lt;code&gt;/refresh&lt;/code&gt; endpoint.&lt;/p&gt;
+
+&lt;p&gt;When running several instances of your application, this poses several problems:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Refreshing each individual instance is time consuming and too much overhead&lt;/li&gt;
+&lt;li&gt;When running on Cloud Foundry you don&amp;rsquo;t have control over which instances you hit when sending the POST request due to load balancing provided by the &lt;code&gt;router&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Cloud Bus addresses the issues listed above by providing a single endpoint to refresh all application instances via a pub/sub notification.&lt;/p&gt;
+
+&lt;p&gt;1) Create a RabbitMQ service instance, bind it to &lt;code&gt;greeting-config&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf create-service p-rabbitmq standard cloud-bus
+$ cf bind-service greeting-config cloud-bus
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can safely ignore the &lt;em&gt;TIP: Use &amp;lsquo;cf restage&amp;rsquo; to ensure your env variable changes take effect&lt;/em&gt; message from the CLI.  Our app doesn&amp;rsquo;t need to be restaged.  We will push it again with new functionality in a moment.&lt;/p&gt;
+
+&lt;p&gt;2) Include the cloud bus dependency in the  &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-config/pom.xml&lt;/code&gt;.  &lt;em&gt;You will need to paste this in your file.&lt;/em&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;org.springframework.cloud&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;spring-cloud-starter-bus-amqp&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;3) Repackage the &lt;code&gt;greeting-config&lt;/code&gt; application:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ mvn clean package
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4) Deploy the application and scale the number of instances.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cf push greeting-config -p target/greeting-config-0.0.1-SNAPSHOT.jar -i 3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;5) Observe the logs that are generated by refreshing the &lt;code&gt;greeting-config&lt;/code&gt;
+&lt;code&gt;/&lt;/code&gt; endpoint several times in your browser and tailing the logs.  Allow this process to run through the next few steps.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;[mac, linux]
+$ cf logs greeting-config | grep GreetingController
+
+[windows]
+$ cf logs greeting-config
+# then search output for &amp;quot;GreetingController&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All app instances are creating debug statements.  Notice the &lt;code&gt;[App/X]&lt;/code&gt;.  It denotes which app instance is logging.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;2015-09-28T20:53:06.07-0500 [App/2]      OUT 2015-09-29 01:53:06.071 DEBUG 34 --- [io-64495-exec-6] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-09-28T20:53:06.16-0500 [App/1]      OUT 2015-09-29 01:53:06.160 DEBUG 33 --- [io-63186-exec-5] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-09-28T20:53:06.16-0500 [App/1]      OUT 2015-09-29 01:53:06.160 DEBUG 33 --- [io-63186-exec-5] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-09-28T20:53:06.24-0500 [App/1]      OUT 2015-09-29 01:53:06.246 DEBUG 33 --- [io-63186-exec-9] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-09-28T20:53:06.24-0500 [App/1]      OUT 2015-09-29 01:53:06.247 DEBUG 33 --- [io-63186-exec-9] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-09-28T20:53:06.41-0500 [App/0]      OUT 2015-09-29 01:53:06.410 DEBUG 33 --- [io-63566-exec-3] io.pivotal.greeting.GreetingController   : Adding greeting
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;7) Turn logging down.  In your fork of the &lt;code&gt;app-config&lt;/code&gt; repo edit the &lt;code&gt;greeting-config.yml&lt;/code&gt;.  Set the log level to &lt;code&gt;INFO&lt;/code&gt;.  Make sure to push back to Github.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;logging:
+  level:
+    io:
+      pivotal: INFO
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;8) Notify applications to pickup the change.  Open a new terminal window.  Send a POST to the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/bus/refresh&lt;/code&gt; endpoint.  Use your &lt;code&gt;greeting-config&lt;/code&gt; URL not the literal below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ curl -X POST http://greeting-config-hypodermal-subcortex.cfapps.io/bus/refresh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;9) Refresh the &lt;code&gt;greeting-config&lt;/code&gt; &lt;code&gt;/&lt;/code&gt; endpoint several times in your browser.  No more logs!&lt;/p&gt;
+
+&lt;p&gt;10) Stop tailing logs from the &lt;code&gt;greeting-config&lt;/code&gt; application.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring Cloud Services Labs Setup</title>
+      <link>/spring-cloud-services/scs/labs-setup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/spring-cloud-services/scs/labs-setup/</guid>
+      <description>
+
+&lt;h3 id=&#34;set-up-the-spring-cloud-services-labs-repo:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Set up the &lt;code&gt;spring-cloud-services-labs&lt;/code&gt; Repo&lt;/h3&gt;
+
+&lt;p&gt;1) Fork the labs repo to your account.  Browse to: &lt;a href=&#34;https://github.com/pivotal-enablement/spring-cloud-services-labs&#34;&gt;https://github.com/pivotal-enablement/spring-cloud-services-labs&lt;/a&gt;.  Then fork the repo.
+&lt;img src=&#34;images/fork.png&#34; alt=&#34;fork&#34; title=&#34;fork&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;2) GitHub displays your new fork. Copy the HTTPS clone URL from your fork.&lt;/p&gt;
+
+&lt;p&gt;3) Open a new terminal window.  Clone your fork of the &lt;code&gt;spring-cloud-services-labs&lt;/code&gt;.  This contains several applications used to demonstrate cloud native architectures.  Get familiar with the sub directories.  We recommend organizing your work into a &lt;code&gt;repos&lt;/code&gt; directory.  A &lt;code&gt;repos&lt;/code&gt; directory is where you will &lt;a href=&#34;https://git-scm.com/docs/git-clone&#34;&gt;clone&lt;/a&gt; repositories and perform your work.  The repos directory can be any directory on your local file system (e.g. &lt;code&gt;~/repos&lt;/code&gt;, &lt;code&gt;C:\Users\Administrator\repos&lt;/code&gt;, etc.).  Throughout the labs we will reference this directory as &lt;code&gt;$REPOS_HOME&lt;/code&gt;.  There is no need to create the &lt;code&gt;$REPOS_HOME&lt;/code&gt; environment variable, it simply a placeholder used to help you organize lab content.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd $REPOS_HOME
+$ git clone &amp;lt;Your fork of the spring-cloud-services-labs repo - HTTPS clone URL&amp;gt;
+$ cd spring-cloud-services-labs
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;$REPOS_HOME/spring-cloud-services/labs&lt;/code&gt; will be referred to &lt;code&gt;$SPRING_CLOUD_SERVICES_LABS_HOME&lt;/code&gt; throughout the labs.&lt;/p&gt;
+
+&lt;p&gt;4) OPTIONAL STEP - Import applications into your IDE such as Spring Tool Suite (STS).  Importing projects at the &lt;code&gt;spring-cloud-services-labs&lt;/code&gt; level is recommended because there are several projects. Otherwise, use your favorite editor.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STS Import Help:&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Select File &amp;gt; Import&amp;hellip; Then select Maven &amp;gt; Existing Maven Projects. On the Import Maven Projects page, browse to your &lt;code&gt;spring-cloud-services-labs&lt;/code&gt; directory. Make sure all projects are selected and click Finish.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,263 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Spring Boot Getting Started</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Spring Boot Getting Started - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#setup:d680e8a854a7cbad6d490c445cba2eba">Setup</a></li>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</a>
+<ul>
+<li><a href="#create-a-spring-boot-project:d680e8a854a7cbad6d490c445cba2eba">Create A Spring Boot Project</a></li>
+<li><a href="#add-an-endpoint:d680e8a854a7cbad6d490c445cba2eba">Add an Endpoint</a></li>
+<li><a href="#run-the-hello-spring-boot-application:d680e8a854a7cbad6d490c445cba2eba">Run the <code>hello-spring-boot</code> Application</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated time: 25 minutes</p>
+
+<hr />
+
+<h2 id="setup:d680e8a854a7cbad6d490c445cba2eba">Setup</h2>
+
+<p><a href="../labs-setup">Lab Setup</a></p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<ul>
+<li>How to create a Spring Boot Project</li>
+</ul>
+
+<hr />
+
+<h2 id="exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</h2>
+
+<h3 id="create-a-spring-boot-project:d680e8a854a7cbad6d490c445cba2eba">Create A Spring Boot Project</h3>
+
+<p>1) Browse to <a href="https://start.spring.io/">https://start.spring.io/</a></p>
+
+<p><img src="images/spring-initializr-init.png" alt="Spring Initializr" title="Spring Initializr" /></p>
+
+<p><strong><em>Fill Out the Form Accordingly:</em></strong></p>
+
+<p>2) Generate a <code>Maven Project</code> with Spring Boot <code>1.3</code> (if this version is unavailable then get the latest 1.3.X version, but no SNAPSHOTS).</p>
+
+<p>3) In the <strong>Project Metadata</strong> section, add the following:</p>
+
+<p><strong>Group</strong></p>
+
+<p><code>io.pivotal</code></p>
+
+<p><strong>Artifact</strong></p>
+
+<p><code>hello-spring-boot</code></p>
+
+<p>4) In the <strong>Dependencies</strong> section, add the following:</p>
+
+<ul>
+<li><code>Web</code></li>
+</ul>
+
+<p>Completed Form:
+<img src="images/spring-initializr-complete.png" alt="Spring Initializr" title="Spring Initializr" /></p>
+
+<p>5) Click the Generate Project button. Your browser will download a zip file. Unpack that zip file into the repos directory (<code>$REPOS_HOME</code>).  If you don&rsquo;t know what <code>$REPOS_HOME</code> is then go back and do the <a href="../labs-setup">setup</a>.</p>
+
+<p>6) Import the project’s <code>pom.xml</code> into your editor/IDE of choice.</p>
+
+<p><strong>STS Import Help</strong>:</p>
+
+<p>Select File &gt; Import&hellip; Then select Maven &gt; Existing Maven Projects. On the Import Maven Projects page, browse to your <code>$REPOS_HOME/hello-spring-boot</code> (e.g. <code>~/repos/hello-spring-boot</code>).</p>
+
+<h3 id="add-an-endpoint:d680e8a854a7cbad6d490c445cba2eba">Add an Endpoint</h3>
+
+<p>1) Add a <code>@RestController</code> annotation to the class <code>io.pivotal.HelloSpringBootApplication</code> (<code>$REPOS_HOME/hello-spring-boot/src/main/java/io/pivotal/HelloSpringBootApplication.java</code>).</p>
+
+<pre><code class="language-java">package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class HelloSpringBootApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HelloSpringBootApplication.class, args);
+    }
+}
+
+</code></pre>
+
+<p><strong>STS Shortcut Help</strong>:</p>
+
+<p><em>Need help adding an import?</em></p>
+
+<p>Use the <code>organize imports</code> command:</p>
+
+<ul>
+<li><strong>PC:</strong> Ctrl + Shift + O</li>
+<li><strong>Mac:</strong> Cmd + Shift + O</li>
+</ul>
+
+<p><em>Not sure how to resolve the problem STS is reporting?</em></p>
+
+<p>Try the <code>quick-fix</code> (magic shortcut) command:</p>
+
+<ul>
+<li><strong>PC:</strong> Ctrl + 1</li>
+<li><strong>Mac:</strong> Cmd + 1</li>
+</ul>
+
+<p>Other helpful <a href="https://blog.codecentric.de/en/2012/08/my-top-10-shortcuts-for-eclipse-on-mac-os-x-and-windows-and-how-you-survive-the-change-from-windows-to-mac/">shortcuts</a>.</p>
+
+<p>2) Add the following request handler to the class <code>io.pivotal.HelloSpringBootApplication</code> (<code>$REPOS_HOME/hello-spring-boot/src/main/java/io/pivotal/HelloSpringBootApplication.java</code>).</p>
+
+<pre><code class="language-java">@RequestMapping(&quot;/&quot;)
+public String hello() {
+    return &quot;Hello World!&quot;;
+}
+</code></pre>
+
+<p>Completed:</p>
+
+<pre><code class="language-java">package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class HelloSpringBootApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HelloSpringBootApplication.class, args);
+    }
+
+    @RequestMapping(&quot;/&quot;)
+    public String hello() {
+        return &quot;Hello World!&quot;;
+    }
+}
+</code></pre>
+
+<h3 id="run-the-hello-spring-boot-application:d680e8a854a7cbad6d490c445cba2eba">Run the <code>hello-spring-boot</code> Application</h3>
+
+<p>1) Open a terminal window and change to <code>hello-spring-boot</code> directory:</p>
+
+<pre><code class="language-bash">$ cd $REPOS_HOME/hello-spring-boot
+</code></pre>
+
+<p>2) Run the application</p>
+
+<pre><code>mvn clean spring-boot:run
+</code></pre>
+
+<p>3) You should see the application start up an embedded Apache Tomcat server on port 8080 (review terminal output):</p>
+
+<pre><code>2015-10-02 13:26:59.264  INFO 44749 --- [lication.main()] s.b.c.e.t.TomcatEmbeddedServletContainer : Tomcat started on port(s): 8080 (http)
+2015-10-02 13:26:59.267  INFO 44749 --- [lication.main()] io.pivotal.hello.HelloSpringBootApplication     : Started HelloSpringBootApplication in 2.541 seconds (JVM running for 9.141)
+</code></pre>
+
+<p>4) Browse to: <a href="http://localhost:8080/">http://localhost:8080/</a></p>
+
+<p><img src="images/hello-world.png" alt="Hello World" title="Hello World" /></p>
+
+<p>5) Stop the <code>hello-spring-boot</code> application.  In the terminal window: <code>Ctrl + C</code></p>
+
+<p><strong>Congratulations!</strong>  You’ve just completed your first Spring Boot application.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+

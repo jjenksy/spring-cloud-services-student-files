@@ -1,0 +1,324 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Spring Boot with Spring Data Rest</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Spring Boot with Spring Data Rest - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</a>
+<ul>
+<li><a href="#add-an-embedded-database:d680e8a854a7cbad6d490c445cba2eba">Add an Embedded Database</a></li>
+<li><a href="#persistence-with-spring-data-jpa:d680e8a854a7cbad6d490c445cba2eba">Persistence With Spring Data JPA</a></li>
+<li><a href="#add-a-restful-api-with-spring-data-rest:d680e8a854a7cbad6d490c445cba2eba">Add a Restful API with Spring Data Rest</a></li>
+<li><a href="#how-to-run-code-on-startup:d680e8a854a7cbad6d490c445cba2eba">How to Run Code on Startup</a></li>
+<li><a href="#turn-up-logging:d680e8a854a7cbad6d490c445cba2eba">Turn Up Logging</a></li>
+<li><a href="#run-hello-spring-boot-rest:d680e8a854a7cbad6d490c445cba2eba">Run <code>hello-spring-boot-rest</code></a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated Time: 25 minutes</p>
+
+<hr />
+
+<p><a href="../labs-setup">Lab Setup</a></p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<ul>
+<li>How to use repositories for data access</li>
+<li>How to expose a REST API on top of those repositories</li>
+<li>How to use an embedded database for development</li>
+<li>How to use a production ready database in production</li>
+<li>How to gain access to the command line arguments and run specific code once</li>
+<li>How to control log levels</li>
+</ul>
+
+<hr />
+
+<h2 id="exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</h2>
+
+<h3 id="add-an-embedded-database:d680e8a854a7cbad6d490c445cba2eba">Add an Embedded Database</h3>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml</code>.  By adding the <code>hsqldb</code> dependency, we have added embedded database support for the <code>hello-spring-boot-rest</code> application.  This helps us get started quickly in development, as we don&rsquo;t have to provision a database.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;org.hsqldb&lt;/groupId&gt;
+	&lt;artifactId&gt;hsqldb&lt;/artifactId&gt;
+	&lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<h3 id="persistence-with-spring-data-jpa:d680e8a854a7cbad6d490c445cba2eba">Persistence With Spring Data JPA</h3>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml</code>.  By adding the <code>spring-boot-starter-data-jpa</code> dependency, we have added Spring Data JPA support for the <code>hello-spring-boot-rest</code> application.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>Implementing a data access layer of an application has been cumbersome for quite a while. Too much boilerplate code has to be written to execute simple queries as well as perform pagination, and auditing. Spring Data JPA aims to significantly improve the implementation of data access layers by reducing the effort to the amount that&rsquo;s actually needed. As a developer you write your repository interfaces, including custom finder methods, and Spring will provide the implementation automatically.</p>
+
+<p>To read more on Spring Data JPA go <a href="http://docs.spring.io/spring-data/jpa/docs/1.9.0.RELEASE/reference/html/">here</a>.</p>
+
+<p>2) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/Greeting.java</code>.  This is a typical JPA domain (<code>Entity</code>) class.  This class represents one row in our <code>greeting</code> table.</p>
+
+<pre><code class="language-java">@Entity
+public class Greeting {
+
+	@Id
+	private Integer id;
+
+	private String text;
+
+	public Greeting(Integer id, String text) {
+		super();
+		this.id = id;
+		this.text = text;
+	}
+
+	@Override
+	public String toString() {
+		return &quot;Greeting [id=&quot; + id + &quot;, text=&quot; + text + &quot;]&quot;;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public Greeting() {
+
+	}
+
+}
+</code></pre>
+
+<p>3) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/GreetingRepository.java</code>.  This repository interface provides <a href="http://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html">CRUD operations</a> against the <code>greeting</code> table.  All without the developer having to write any implementation!</p>
+
+<pre><code class="language-java">public interface GreetingRepository extends JpaRepository&lt;Greeting, Integer&gt;{
+
+}
+</code></pre>
+
+<p>4) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/resources/application.yml</code>.  The <code>spring.jpa.hibernate.ddl-auto</code> setting controls how/if DDL changes are made.  In this case, our application will update the schema if needed on startup.  Read more on database initialization <a href="http://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html">here</a>.</p>
+
+<pre><code class="language-yml">spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+</code></pre>
+
+<h3 id="add-a-restful-api-with-spring-data-rest:d680e8a854a7cbad6d490c445cba2eba">Add a Restful API with Spring Data Rest</h3>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/pom.xml</code>.  By adding the <code>spring-boot-starter-data-rest</code> dependency, we have added REST support for our JPA repositories in the <code>hello-spring-boot-rest</code> application.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-boot-starter-data-rest&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>The goal of the Spring Data REST project is to provide a solid foundation on which to expose CRUD operations to your repositories using plain HTTP REST semantics.  Read more on Spring Data REST <a href="http://docs.spring.io/spring-data/rest/docs/2.4.0.RELEASE/reference/html/">here</a>.</p>
+
+<p>For the <code>GreetingRepository</code>, Spring Data REST exposes a collection resource at <code>/greetings</code>. The path is derived from the uncapitalized, pluralized, simple class name of the domain class being managed. It also exposes an item resource for each of the items managed by the repository under the URI template <code>/greetings/{id}</code>.</p>
+
+<p>We will explore the REST API, once we populate the database.</p>
+
+<h3 id="how-to-run-code-on-startup:d680e8a854a7cbad6d490c445cba2eba">How to Run Code on Startup</h3>
+
+<p>In many cases, you need to run some code on startup.  Spring Boot allows you capture the command line arguments and run code just as if you had implemented <code>public static void main(String[] args)</code> by implementing a <code>CommandLineRunner</code> bean.</p>
+
+<p><code>CommandLineRunner</code> is a core feature to Spring Boot so there are no dependencies that need to be explicitly added.</p>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/java/io/pivotal/hello/HelloSpringBootApplication.java</code>.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+public class HelloSpringBootApplication {
+
+	Logger logger = LoggerFactory
+			.getLogger(HelloSpringBootApplication.class);
+
+	public static void main(String[] args) {
+		SpringApplication.run(HelloSpringBootApplication.class, args);
+	}
+
+	/**
+	 *
+	 * Loads the database on startup
+	 *
+	 * @param gr
+	 * @return
+	 */
+	@Bean
+	CommandLineRunner loadDatabase(GreetingRepository gr) {
+		return args -&gt; {
+			logger.debug(&quot;loading database..&quot;);
+			gr.save(new Greeting(1, &quot;Hello&quot;));
+			gr.save(new Greeting(2, &quot;Hola&quot;));
+			gr.save(new Greeting(3, &quot;Ohai&quot;));
+			logger.debug(&quot;record count: {}&quot;, gr.count());
+			gr.findAll().forEach(x -&gt; logger.debug(x.toString()));
+		};
+
+	}
+
+}
+
+</code></pre>
+
+<p>In this case, we are using a <code>CommandLineRunner</code> to populate the database with our <code>GreetingRepository</code>.</p>
+
+<h3 id="turn-up-logging:d680e8a854a7cbad6d490c445cba2eba">Turn Up Logging</h3>
+
+<p>To view the debug statements in the class we can turn up logging.</p>
+
+<p>1) Review the following file: <code>$SPRING_BOOT_LABS_HOME/hello-spring-boot-rest/src/main/resources/application.yml</code>.</p>
+
+<pre><code class="language-yaml">logging:
+  level:
+    io:
+      pivotal:DEBUG
+</code></pre>
+
+<p>Log levels can be  <code>ERROR</code>, <code>WARN</code>, <code>INFO</code>, <code>DEBUG</code> or <code>TRACE</code>.</p>
+
+<p>Simply specify the package/class in the <code>logging.level</code> key and set the desired level.</p>
+
+<p>In this case, we have turned on <code>DEBUG</code> logging for everything in the <code>io.pivotal</code> package.</p>
+
+<h3 id="run-hello-spring-boot-rest:d680e8a854a7cbad6d490c445cba2eba">Run <code>hello-spring-boot-rest</code></h3>
+
+<p>1) Open a terminal window.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_BOOT_LABS_HOME/hello-spring-boot-rest
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>2) View the logs in the terminal output.  See the database being populated.</p>
+
+<pre><code>2015-10-06 13:42:27.350 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : loading database..
+2015-10-06 13:42:27.527 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : record count: 3
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=1, text=Hello]
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=2, text=Hola]
+2015-10-06 13:42:27.564 DEBUG 65573 --- [lication.main()] i.p.hello.HelloSpringBootApplication     : Greeting [id=3, text=Ohai]
+</code></pre>
+
+<p>3) Browse to <a href="http://localhost:8080/greetings">http://localhost:8080/greetings</a></p>
+
+<p><img src="images/greetings.png" alt="greetings" title="greetings" /></p>
+
+<p>Notice that not just data is returned but links on how to navigate the API.  This is provided by <a href="http://projects.spring.io/spring-hateoas/">Spring HATEOAS</a> as opposed to establishing a contract up front or use of documentation.  Read more on <a href="https://en.wikipedia.org/wiki/HATEOAS">HATEOAS</a>.</p>
+
+<p>4) Experiment with paging and sorting</p>
+
+<ul>
+<li>Sort by text in ascending order: <a href="http://localhost:8080/greetings?sort=text,asc">http://localhost:8080/greetings?sort=text,asc</a></li>
+<li>Sort by text in decending order: <a href="http://localhost:8080/greetings?sort=text,desc">http://localhost:8080/greetings?sort=text,desc</a></li>
+<li>Get page 0, size 1: <a href="http://localhost:8080/greetings?size=1&amp;page=0">http://localhost:8080/greetings?size=1&amp;page=0</a></li>
+<li>Get page 1, size 1: <a href="http://localhost:8080/greetings?size=1&amp;page=1">http://localhost:8080/greetings?size=1&amp;page=1</a></li>
+</ul>
+
+<p>5) Stop the <code>hello-spring-boot-rest</code> application.</p>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>When running locally Spring Boot will use the embedded database (<code>hsqldb</code>) and create the <code>DataSource</code> (how to connect to the database) for you.</p>
+
+<p>The purpose of this lab is to set the stage to deploying your application to cloud foundry, which is the topic of the next lab.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+

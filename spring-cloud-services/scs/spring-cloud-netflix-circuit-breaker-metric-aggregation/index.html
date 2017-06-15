@@ -1,0 +1,286 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Circuit Breaker Metric Aggregation</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Circuit Breaker Metric Aggregation - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</a></li>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</a>
+<ul>
+<li><a href="#start-the-config-server-service-registry-fortune-service-greeting-hystrix-and-hystrix-dashboard-applications:d680e8a854a7cbad6d490c445cba2eba">Start the  <code>config-server</code>,  <code>service-registry</code>, <code>fortune-service</code>, <code>greeting-hystrix</code>, and <code>hystrix-dashboard</code> applications</a></li>
+<li><a href="#set-up-turbine:d680e8a854a7cbad6d490c445cba2eba">Set up <code>turbine</code></a></li>
+<li><a href="#deploying-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploying to PCF</a></li>
+<li><a href="#deploy-greeting-hystrix-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy <code>greeting-hystrix</code> to PCF</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated Time: 25 minutes</p>
+
+<hr />
+
+<h2 id="requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</h2>
+
+<p><a href="/scs-sp1/requirements">Lab Requirements</a></p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<ul>
+<li>How to aggregate multiple metric streams with <code>turbine</code></li>
+<li>How to use Turbine in Pivotal Cloud Foundry</li>
+</ul>
+
+<hr />
+
+<h2 id="exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</h2>
+
+<hr />
+
+<h3 id="start-the-config-server-service-registry-fortune-service-greeting-hystrix-and-hystrix-dashboard-applications:d680e8a854a7cbad6d490c445cba2eba">Start the  <code>config-server</code>,  <code>service-registry</code>, <code>fortune-service</code>, <code>greeting-hystrix</code>, and <code>hystrix-dashboard</code> applications</h3>
+
+<p>1) Start the <code>config-server</code> in a terminal window.  You may have terminal windows still open from previous labs.  They may be reused for this lab.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>2) Start the <code>service-registry</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>3) Start the <code>fortune-service</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>4) Start the <code>greeting-hystrix</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-hystrix
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>5) Start the <code>hystrix-dashboard</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/hystrix-dashboard
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>Allow a few moments for <code>greeting-hystrix</code> and <code>fortune-service</code> to register with the <code>service-registry</code>.</p>
+
+<h3 id="set-up-turbine:d680e8a854a7cbad6d490c445cba2eba">Set up <code>turbine</code></h3>
+
+<p>Looking at individual application instances in the Hystrix Dashboard is not very useful in terms of understanding the overall health of the system. Turbine is an application that aggregates all of the relevant <code>/hystrix.stream</code> endpoints into a combined <code>/turbine.stream</code> for use in the Hystrix Dashboard.</p>
+
+<p>1) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/pom.xml</code> file.  By adding <code>spring-cloud-starter-turbine</code> to the classpath this application is eligible to aggregate metrics via Turbine.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-turbine&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>2) Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/src/main/java/io/pivotal/TurbineApplication.java</code>.  Note the use of the <code>@EnableTurbine</code> annotation. This creates a turbine application.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+@EnableTurbine
+public class TurbineApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(TurbineApplication.class, args);
+  }
+
+}
+</code></pre>
+
+<p>3). Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/turbine/src/main/resources/bootstrap.yml</code>.  <code>turbine.appConfig</code> is a list of Eureka <code>serviceIds</code> that Turbine will use to lookup instances.  <code>turbine.aggregator.clusterConfig</code> is the Turbine cluster these services belong to (how they will be grouped).</p>
+
+<pre><code class="language-yml">server:
+  port: 8585
+spring:
+  application:
+    name: turbine
+turbine:
+  aggregator:
+    clusterConfig: GREETING-HYSTRIX
+  appConfig: greeting-hystrix
+</code></pre>
+
+<p>4) Open a new terminal window. Start the <code>turbine</code> app</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/turbine
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>5) Wait for the <code>turbine</code> application to register with <a href="http://localhost:8761/"><code>service-registry</code></a>.</p>
+
+<p>6) View the turbine stream in a browser <a href="http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX">http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX</a>
+<img src="images/turbine-stream.png" alt="turbine-stream" title="turbine-stream" /></p>
+
+<p>7) Configure the <a href="http://localhost:8686/hystrix"><code>hystrix-dashboard</code></a> to consume the turbine stream.  Enter <code>http://localhost:8585/turbine.stream?cluster=GREETING-HYSTRIX</code></p>
+
+<p>8) Experiment! Refresh the <code>greeting-hystrix</code> <code>/</code> endpoint several times.  Take down the <code>fortune-service</code> app.  What does the dashboard do?</p>
+
+<p>9) When done, stop the <code>config-server</code>, <code>service-registry</code>, <code>fortune-service</code>, <code>greeting-hystrix</code>, <code>hystrix-dashboard</code> and <code>turbine</code> applications.</p>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>Turbine discovered the <code>greeting-hystrix</code> application through the <code>service-registry</code> application.  Turbine then consumed the <code>/hystrix.stream</code> and rolled that up into an aggregate <code>/turbine.stream</code>.  Therefore, if we had multiple <code>greeting-hystrix</code> applications running all the metrics could be consumed from this single endpoint (<code>/turbine.stream</code>)</p>
+
+<h3 id="deploying-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploying to PCF</h3>
+
+<p>In PCF, the traditional Turbine model of pulling metrics from all the distributed Hystrix enabled applications via HTTP doesn’t work when using the <code>route</code> registrationMethod.  Read <a href="http://docs.pivotal.io/spring-cloud-services/service-registry/registering-a-service.html">here</a> for more details on registration methods.</p>
+
+<p>When applications register using the <code>route</code> method every application has the same <code>hostname</code> (every app instance has the same URL for a given app).  Therefore it is unknown from the Turbine perspective if all metrics are properly being collected.  The problem is solved with Turbine AMQP.  Metrics are published through a message broker.  We&rsquo;ll use RabbitMQ.</p>
+
+<h3 id="deploy-greeting-hystrix-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy <code>greeting-hystrix</code> to PCF</h3>
+
+<p>1) Create a Circuit Breaker Dashboard Service Instance</p>
+
+<pre><code class="language-bash">$ cf create-service p-circuit-breaker-dashboard standard circuit-breaker-dashboard
+</code></pre>
+
+<p>When creating a Circuit Breaker Service instance there are three items that get provisioned:</p>
+
+<ol>
+<li>Hystrix Dashboard application instance</li>
+<li>Turbine AMQP application instance</li>
+<li>RabbitMQ Service Instance</li>
+</ol>
+
+<p>This process takes some time and won&rsquo;t be immediately available for binding.  Give it a couple of minutes.</p>
+
+<p>Click on the <strong><em>Services</em></strong> tab and the <strong><em>Circuit Breaker</em></strong> entry to navigate to your service.</p>
+
+<p><img src="images/services-circuit-breaker.png" alt="service" title="services-circuit-breaker" /></p>
+
+<p>Then, click on the <strong><em>Manage</em></strong> link to determine when the <code>circuit-breaker</code> dashboard is ready.</p>
+
+<p><img src="images/manage-circuit-breaker.png" alt="manage" title="manage-circuit-breaker" /></p>
+
+<p>2) Package and push the <code>greeting-hystrix</code> application.</p>
+
+<pre><code class="language-bash">$ mvn clean package
+$ cf push greeting-hystrix -p target/greeting-hystrix-0.0.1-SNAPSHOT.jar -m 1G --random-route --no-start
+</code></pre>
+
+<p>3) Bind services for the <code>greeting-hystrix</code>.</p>
+
+<pre><code class="language-bash">$ cf bind-service greeting-hystrix config-server
+$ cf bind-service greeting-hystrix service-registry
+$ cf bind-service greeting-hystrix circuit-breaker-dashboard
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>4) Set the <code>TRUST_CERTS</code> environment variable for the <code>greeting-hystrix</code> application (our PCF instance is using self-signed SSL certificates).</p>
+
+<pre><code class="language-bash">$ cf set-env greeting-hystrix TRUST_CERTS &lt;your api endpoint&gt;
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>5) Start the <code>greeting-hystrix</code> app.</p>
+
+<pre><code class="language-bash">$ cf start greeting-hystrix
+</code></pre>
+
+<p>6) Experiment! Refresh the <code>greeting-hystrix</code> / endpoint several times. Take down the fortune-service app. Scale the greeting-hystrix app. What does the dashboard do?</p>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>The <code>greeting-hystrix</code> application is publishing metrics via AMQP to RabbitMQ (this can be discovered by looking at <code>VCAP_SERVICES</code>).  Those metrics are then consumed and aggregated by Turbine.  The Circuit Breaker Dashboard then consumes the Turbine endpoint.  All of this detail has been abstracted away by using the PCF Circuit Breaker Dashboard Service.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+

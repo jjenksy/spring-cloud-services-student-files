@@ -1,0 +1,313 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Client Side Load Balancing</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Client Side Load Balancing - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</a></li>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</a>
+<ul>
+<li><a href="#start-the-config-server-service-registry-and-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Start the  <code>config-server</code>,  <code>service-registry</code>, and <code>fortune-service</code></a></li>
+<li><a href="#set-up-greeting-ribbon:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-ribbon</code></a></li>
+<li><a href="#set-up-greeting-ribbon-rest:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-ribbon-rest</code></a></li>
+<li><a href="#deploy-the-greeting-ribbon-rest-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>greeting-ribbon-rest</code> to PCF</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated Time: 25 minutes</p>
+
+<hr />
+
+<h2 id="requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</h2>
+
+<p><a href="/scs-sp1/requirements">Lab Requirements</a></p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<hr />
+
+<ul>
+<li>How to use Ribbon as a client side load balancer</li>
+<li>How to use a Ribbon enabled <code>RestTemplate</code></li>
+</ul>
+
+<hr />
+
+<h2 id="exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</h2>
+
+<hr />
+
+<h3 id="start-the-config-server-service-registry-and-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Start the  <code>config-server</code>,  <code>service-registry</code>, and <code>fortune-service</code></h3>
+
+<p>1) Start the <code>config-server</code> in a terminal window.  You may have terminal windows still open from previous labs.  They may be reused for this lab.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>2) Start the <code>service-registry</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>3) Start the <code>fortune-service</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+</code></pre>
+
+<h3 id="set-up-greeting-ribbon:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-ribbon</code></h3>
+
+<p><strong><em>No additions to the pom.xml</em></strong></p>
+
+<p>In this case, we don&rsquo;t need to explicitly include Ribbon support in the <code>pom.xml</code>.  Ribbon support is pulled in through transitive dependencies (dependencies of the dependencies we have already defined).</p>
+
+<p>1) Review the the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon/src/main/java/io/pivotal/greeting/GreetingController.java</code>.  Notice the <code>loadBalancerClient</code>.  It is a client side load balancer (Ribbon).  Review the <code>fetchFortuneServiceUrl()</code> method.  Ribbon is integrated with Eureka so that it can discover services as well.  Notice how the <code>loadBalancerClient</code> chooses a service instance by name.</p>
+
+<pre><code class="language-java">@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private LoadBalancerClient loadBalancerClient;
+
+  @RequestMapping(&quot;/&quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&quot;Adding greeting&quot;);
+    model.addAttribute(&quot;msg&quot;, &quot;Greetings!!!&quot;);
+
+
+    RestTemplate restTemplate = new RestTemplate();
+    String fortune = restTemplate.getForObject(fetchFortuneServiceUrl(), String.class);
+
+    logger.debug(&quot;Adding fortune&quot;);
+    model.addAttribute(&quot;fortune&quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &quot;greeting&quot;;
+  }
+
+  private String fetchFortuneServiceUrl() {
+    ServiceInstance instance = loadBalancerClient.choose(&quot;fortune-service&quot;);
+
+    logger.debug(&quot;uri: {}&quot;, instance.getUri().toString());
+    logger.debug(&quot;serviceId: {}&quot;, instance.getServiceId());
+
+    return instance.getUri().toString();
+  }
+
+}
+</code></pre>
+
+<p>2) Open a new terminal window.  Start the <code>greeting-ribbon</code> app.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>3) After the a few moments, check the <code>service-registry</code> dashboard <a href="http://localhost:8761">http://localhost:8761</a>.  Confirm the <code>greeting-ribbon</code> app is registered.</p>
+
+<p>4) Browse to <a href="http://localhost:8080/">http://localhost:8080/</a> to the <code>greeting-ribbon</code> application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the <code>greeting-ribbon</code> app.  See the <code>uri</code> and <code>serviceId</code> being logged.</p>
+
+<p>5) Stop the <code>greeting-ribbon</code> application.</p>
+
+<h3 id="set-up-greeting-ribbon-rest:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-ribbon-rest</code></h3>
+
+<p><strong><em>No additions to the pom.xml</em></strong></p>
+
+<p>In this case, we don&rsquo;t need to explicitly include Ribbon support in the <code>pom.xml</code>.  Ribbon support is pulled in through transitive dependencies (dependencies of the dependencies we have already defined).</p>
+
+<p>1) Review the the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest/src/main/java/io/pivotal/GreetingRibbonRestApplication.java</code>.  In addition to the standard <code>@EnableDiscoveryClient</code> annotation, we&rsquo;re also configuring a <code>RestTemplate</code> bean.  It is not the usual <code>RestTemplate</code>, it is load balanced by Ribbon.  The <code>@LoadBalanced</code> annotation is a qualifier to ensure we get the load balanced <code>RestTemplate</code> injected.  This further simplifies application code.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetingRibbonRestApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(GreetingRibbonRestApplication.class, args);
+  }
+
+  @LoadBalanced
+  @Bean
+  RestTemplate restTemplate() {
+    return new RestTemplate();
+  }
+
+}
+</code></pre>
+
+<p>2) Review the the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest/src/main/java/io/pivotal/greeting/GreetingController.java</code>.  Here we autowire the restTemplate we configured in the previous step.  Note also that the spring cloud API is smart enough to dynamically substitute the name of the service <code>fortune-service</code> in the url parameter for <code>getForObject</code> with its load-balanced, discovered url.</p>
+
+<pre><code class="language-java">@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private RestTemplate restTemplate;
+
+  @RequestMapping(&quot;/&quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&quot;Adding greeting&quot;);
+    model.addAttribute(&quot;msg&quot;, &quot;Greetings!!!&quot;);
+
+    String fortune = restTemplate.getForObject(&quot;http://fortune-service&quot;, String.class);
+
+    logger.debug(&quot;Adding fortune&quot;);
+    model.addAttribute(&quot;fortune&quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &quot;greeting&quot;;
+  }
+
+}
+</code></pre>
+
+<p>2) Open a new terminal window.  Start the <code>greeting-ribbon-rest</code> app.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-ribbon-rest
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>3) After the a few moments, check the <code>service-registry</code> dashboard at <a href="http://localhost:8761">http://localhost:8761</a>.  Confirm the <code>greeting-ribbon-rest</code> app is registered.</p>
+
+<p>4) Browse to <a href="http://localhost:8080/">http://localhost:8080/</a> to the <code>greeting-ribbon-rest</code> application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the <code>greeting-ribbon-rest</code> app.</p>
+
+<p>5) When done stop the <code>config-server</code>, <code>service-registry</code>, <code>fortune-service</code> and <code>greeting-ribbon-rest</code> applications.</p>
+
+<h3 id="deploy-the-greeting-ribbon-rest-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>greeting-ribbon-rest</code> to PCF</h3>
+
+<p>1) Package and push the <code>greeting-ribbon-rest</code> application.</p>
+
+<pre><code>$ mvn clean package
+$ cf push greeting-ribbon-rest -p target/greeting-ribbon-rest-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+</code></pre>
+
+<p>2) Bind services for the <code>greeting-ribbon-rest</code> application.</p>
+
+<pre><code class="language-bash">$ cf bind-service greeting-ribbon-rest config-server
+$ cf bind-service greeting-ribbon-rest service-registry
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>3) Set the <code>TRUST_CERTS</code> environment variable for the <code>greeting-ribbon-rest</code> application (our PCF instance is using self-signed SSL certificates).</p>
+
+<pre><code class="language-bash">$ cf set-env greeting-ribbon-rest TRUST_CERTS &lt;your api endpoint&gt;
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>4) Start the <code>greeting-ribbon-rest</code> app.</p>
+
+<pre><code class="language-bash">$ cf start greeting-ribbon-rest
+</code></pre>
+
+<p>5) After the a few moments, check the <code>service-registry</code>.  Confirm the <code>greeting-ribbon-rest</code> app is registered.</p>
+
+<p>6) Refresh the <code>greeting-ribbon-rest</code> <code>/</code> endpoint.</p>
+
+<p><strong>Note About This Lab</strong></p>
+
+<p>If services (e.g. <code>fortune-service</code>) are registering using the first Cloud Foundry URI (using the <code>route</code> registration method) this means that requests to them are being routed through the <code>router</code> and subsequently load balanced at that layer.  Therefore, client side load balancing doesn&rsquo;t occur.</p>
+
+<p>Pivotal Cloud Foundry has recently added support for allowing cross container communication.  This will allow applications to communicate with each other without passing through the <code>router</code>.  As applied to client-side load balancing, services such as <code>fortune-service</code> would register with Eureka using their container IP addresses.  Allowing clients to reach them without going through the <code>router</code>.  This is known as using the <code>direct</code> registration method.</p>
+
+<p>For more details, please read the <a href="http://docs.pivotal.io/spring-cloud-services/1-2/service-registry/writing-client-applications.html#register-a-service">following</a>.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+

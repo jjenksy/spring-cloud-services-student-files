@@ -1,0 +1,27 @@
+
+/* reducing the font size */
+.doc-main {
+  font-size: 12pt;
+}
+
+/* especially for code blocks */
+.doc-main pre code {
+  font-size: 10pt;
+  overflow-x: auto;
+}
+
+/* fixing issue with what looks like double-lines on the main/agenda page */
+.list-group-item {
+  border-top: 0;
+}
+
+/* reducing top margin for h2's */
+h2 {
+  margin-top: 25px;
+}
+
+/* reducing height of heading */
+.pane > .container {
+  padding: 0px 10px;
+}
+

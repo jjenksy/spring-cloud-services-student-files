@@ -1,0 +1,566 @@
+<div class="row">
+	
+	<div class="pane bg-dark-2">
+		<div class="container">
+			
+				<h2 class="type-neutral-11 title">Service Discovery</h2>
+				
+		</div>
+	</div>
+</div>
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Spring Cloud Services Training">
+		<link rel="icon" href="/spring-cloud-services/P_Mark_WhiteOnTeal.png">
+		<title>Service Discovery - Spring Cloud Services Training</title>
+		<link rel="stylesheet" href="/spring-cloud-services/css/highlight.js.min.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/pui-v2.0.0/pivotal-ui.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/theme.css">
+		<link rel="stylesheet" href="/spring-cloud-services/css/bootie-docs.css">
+		<link rel="stylesheet" href="/spring-cloud-services/stylesheets/custom.css">
+	</head>
+
+<body role="document">
+	
+
+<div class="container">
+	<div class="row">
+			
+
+	<div class="col-sm-14 doc-sidebar">
+		<div class="sidebar-module">
+			<div class="sidebar-toc">
+				<h4>Table of Contents</h4>
+				<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</a></li>
+<li><a href="#what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</a></li>
+<li><a href="#exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</a>
+<ul>
+<li><a href="#set-up-the-app-config-repo:d680e8a854a7cbad6d490c445cba2eba">Set up the <code>app-config</code> Repo</a></li>
+<li><a href="#set-up-config-server:d680e8a854a7cbad6d490c445cba2eba">Set up <code>config-server</code></a></li>
+<li><a href="#set-up-service-registry:d680e8a854a7cbad6d490c445cba2eba">Set up <code>service-registry</code></a></li>
+<li><a href="#set-up-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Set up <code>fortune-service</code></a></li>
+<li><a href="#set-up-greeting-service:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-service</code></a></li>
+<li><a href="#optionally-update-app-config-for-fortune-service-and-greeting-service-to-run-on-pcf:d680e8a854a7cbad6d490c445cba2eba">Optionally Update App Config for <code>fortune-service</code> and <code>greeting-service</code> to run on PCF</a></li>
+<li><a href="#deploy-the-fortune-service-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>fortune-service</code> to PCF</a></li>
+<li><a href="#deploy-the-greeting-service-app-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>greeting-service</code> app to PCF</a></li>
+<li><a href="#scale-the-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Scale the <code>fortune-service</code></a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+			</div>
+		</div>
+	</div>
+
+
+		<div class="col-sm-24 doc-main">
+			<main role="main">
+				<article>
+					<a id="title"></a>
+					<div class="doc-entry-meta">
+					</div>
+					<section>
+						
+
+<hr />
+
+<p>Estimated Time: 45 minutes</p>
+
+<hr />
+
+<h2 id="requirements:d680e8a854a7cbad6d490c445cba2eba">Requirements</h2>
+
+<p><a href="/scs-sp1/requirements">Lab Requirements</a></p>
+
+<hr />
+
+<h2 id="what-you-will-learn:d680e8a854a7cbad6d490c445cba2eba">What You Will Learn</h2>
+
+<ul>
+<li>How to embed Eureka in a Spring Boot application</li>
+<li>How to register services (<code>greeting-service</code> and <code>fortune-service</code>) with Eureka</li>
+<li>How to discover services (<code>fortune-service</code>) with Eureka</li>
+<li>How to use Spring Cloud Services to provision a Service Registry</li>
+</ul>
+
+<hr />
+
+<h2 id="exercises:d680e8a854a7cbad6d490c445cba2eba">Exercises</h2>
+
+<h3 id="set-up-the-app-config-repo:d680e8a854a7cbad6d490c445cba2eba">Set up the <code>app-config</code> Repo</h3>
+
+<p>1) Create an <code>$APP_CONFIG_REPO_HOME/application.yml</code> in your fork of the <code>app-config</code> repo with the following contents:</p>
+
+<pre><code class="language-yml">security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging:
+  level:
+    io:
+      pivotal: DEBUG
+</code></pre>
+
+<p>Then commit and push back to Github.</p>
+
+<p><strong><em>A note about the application.yml</em></strong></p>
+
+<p>When the <code>config-server</code>&rsquo;s backing repository contains an <code>application.yml</code> it is shared with all applications.  Therefore, it is a great place to put common configuration for all applications.  In this case, we have dropped security on all the endpoints and setup logging.</p>
+
+<p>In the <a href="/spring-cloud-services/spring-cloud-config">Spring Cloud Config Lab</a>, we used application specific configuration files:</p>
+
+<ul>
+<li>One based on the application name <code>greeting-config.yml</code></li>
+<li>One based on the application name + profile <code>greeting-config-qa.yml</code></li>
+</ul>
+
+<p>Application specific files override configuration settings in the <code>application.yml</code>.</p>
+
+<h3 id="set-up-config-server:d680e8a854a7cbad6d490c445cba2eba">Set up <code>config-server</code></h3>
+
+<p>1) Start the <code>config-server</code> in a terminal window.  You may have a terminal window still open from the previous lab.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/config-server
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>2) Verify the <code>config-server</code> is up.  Open a browser and fetch <a href="http://localhost:8888/myapp/default">http://localhost:8888/myapp/default</a></p>
+
+<p><img src="images/restful-api.png" alt="Config Server" title="Config Server" /></p>
+
+<p>Note that a random application name was used and it picked up configuration from the <code>application.yml</code>.</p>
+
+<h3 id="set-up-service-registry:d680e8a854a7cbad6d490c445cba2eba">Set up <code>service-registry</code></h3>
+
+<p>1) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/pom.xml</code> file.  By adding <code>spring-cloud-starter-eureka-server</code> to the classpath this application is eligible to embed an Eureka server.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-eureka-server&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>2) Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/src/main/java/io/pivotal/ServiceRegistryApplication.java</code>.  Note the use of the <code>@EnableEurekaServer</code> annotation that makes this application a Eureka server.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+@EnableEurekaServer
+public class ServiceRegistryApplication {
+
+   public static void main(String[] args) {
+       SpringApplication.run(ServiceRegistryApplication.class, args);
+   }
+}
+</code></pre>
+
+<p>3). Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/service-registry/src/main/resources/application.yml</code></p>
+
+<pre><code class="language-yml"> server:
+   port: 8761
+
+ eureka:
+   instance:
+     hostname: localhost
+   client:
+     registerWithEureka: false
+     fetchRegistry: false
+     serviceUrl:
+       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+</code></pre>
+
+<p><strong><em>About Eureka</em></strong></p>
+
+<p>Eureka is designed for peer awareness (running multiple instances with knowledge of each other) to further increase availability.  Because of this, Eureka is not only a server but a client as well.  Therefore, Eureka Servers will be clients to each other.  <code>Eureka Server A</code> ⇄ <code>Eureka Server B</code>.</p>
+
+<p>For the purposes of this lab, we will simplify that configuration to run in standalone mode.</p>
+
+<p>Standalone mode still offers a high degree of resilience with:</p>
+
+<ul>
+<li>Heartbeats between the client and server to keep registrations up to date</li>
+<li>Client side caching, so that clients don&rsquo;t go to Eureka for every lookup</li>
+<li>By running in Pivotal Cloud Foundry which is designed to keep applications up by design</li>
+</ul>
+
+<p>With the above configuration, we have configured Eureka to run in standalone mode.</p>
+
+<p><strong><em>Understanding the configuration parameters</em></strong></p>
+
+<ul>
+<li><code>eureka.instance.hostname</code> - the hostname for this service. In this case, what host to use to reach our standalone Eureka instance.</li>
+<li><code>eureka.client.registerWithEureka</code> - should this application (our standalone Eureka instance) register with Eureka</li>
+<li><code>eureka.client.fetchRegistry</code> - should this application (our stand alone Eureka instance) fetch the registry (for how to discover services)</li>
+<li><code>eureka.client.serviceUrl.defaultZone</code> - the Eureka instance to use for registering and discovering services.  Notice it is pointing to itself (<code>localhost</code>, <code>8761</code>).</li>
+</ul>
+
+<p>4) Open a new terminal window.  Start the <code>service-registry</code>.</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/service-registry
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>5) Verify the <code>service-registry</code> is up.  Browse to <a href="http://localhost:8761/">http://localhost:8761/</a>
+<img src="images/eureka.png" alt="eureka" title="eureka" /></p>
+
+<h3 id="set-up-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Set up <code>fortune-service</code></h3>
+
+<p>1) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/src/main/resources/bootstrap.yml</code> file.  The name of this app is <code>fortune-service</code>.  It also uses the <code>config-server</code>.</p>
+
+<pre><code class="language-yml"> server:
+   port: 8787
+ spring:
+   application:
+     name: fortune-service
+</code></pre>
+
+<p><code>spring.application.name</code> is the name the application will use when registering with Eureka.</p>
+
+<p>2) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/pom.xml</code> file.  By adding <code>spring-cloud-services-starter-service-registry</code> to the classpath this application is eligible to register and discover services with the <code>service-registry</code>.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;io.pivotal.spring.cloud&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-cloud-services-starter-service-registry&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>3) Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service/src/main/java/io/pivotal/FortuneServiceApplication.java</code>.  Notice the <code>@EnableDiscoveryClient</code>.  This enables a discovery client that registers the <code>fortune-service</code> with the <code>service-registry</code> application.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+@EnableDiscoveryClient
+public class FortuneServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(FortuneServiceApplication.class, args);
+    }
+}
+</code></pre>
+
+<p>4) Open a new terminal window.  Start the <code>fortune-service</code></p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/fortune-service
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>5) After the a few moments, check the <code>service-registry</code> dashboard.  Confirm the <code>fortune-service</code> is registered.
+<img src="images/fortune-service.png" alt="fortune-service" title="fortune-service" /></p>
+
+<p>The Eureka Dashboard may report a warning, because we aren&rsquo;t setup with multiple peers.  This can safely be ignored.
+<img src="images/warning.png" alt="warning" title="warning" /></p>
+
+<h3 id="set-up-greeting-service:d680e8a854a7cbad6d490c445cba2eba">Set up <code>greeting-service</code></h3>
+
+<p>1) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/resources/bootstrap.yml</code> file.  The name of this app is <code>greeting-service</code>.  It also uses the <code>config-server</code>.</p>
+
+<pre><code class="language-yml"> spring:
+   application:
+     name: greeting-service
+</code></pre>
+
+<p>2) Review the <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/pom.xml</code> file.  By adding <code>spring-cloud-services-starter-service-registry</code> to the classpath this application is eligible to register and discover services with the <code>service-registry</code>.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+	&lt;groupId&gt;io.pivotal.spring.cloud&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-cloud-services-starter-service-registry&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>3) Review the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/java/io/pivotal/GreetingServiceApplication.java</code>.  Notice the <code>@EnableDiscoveryClient</code>.   This enables a discovery client that registers the <code>greeting-service</code> app with the <code>service-registry</code>.</p>
+
+<pre><code class="language-java">@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetingServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GreetingServiceApplication.class, args);
+    }
+
+}
+</code></pre>
+
+<p>4) Review the the following file: <code>$SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service/src/main/java/io/pivotal/greeting/GreetingController.java</code>.  Notice the <code>DiscoveryClient</code>.  <code>DiscoveryClient</code> is used to discover services registered with the <code>service-registry</code>.  See <code>fetchFortuneServiceUrl()</code>.</p>
+
+<pre><code class="language-java">@Controller
+public class GreetingController {
+
+  Logger logger = LoggerFactory.getLogger(GreetingController.class);
+
+  @Autowired
+  private EurekaClient discoveryClient;
+
+  @RequestMapping(&quot;/&quot;)
+  String getGreeting(Model model) {
+
+    logger.debug(&quot;Adding greeting&quot;);
+    model.addAttribute(&quot;msg&quot;, &quot;Greetings!!!&quot;);
+
+    RestTemplate restTemplate = new RestTemplate();
+    String fortune = restTemplate.getForObject(fetchFortuneServiceUrl(), String.class);
+
+    logger.debug(&quot;Adding fortune&quot;);
+    model.addAttribute(&quot;fortune&quot;, fortune);
+
+    //resolves to the greeting.vm velocity template
+    return &quot;greeting&quot;;
+  }
+
+  private String fetchFortuneServiceUrl() {
+    InstanceInfo instance = discoveryClient.getNextServerFromEureka(&quot;FORTUNE-SERVICE&quot;, false);
+    logger.debug(&quot;instanceID: {}&quot;, instance.getId());
+
+    String fortuneServiceUrl = instance.getHomePageUrl();
+    logger.debug(&quot;fortune service homePageUrl: {}&quot;, fortuneServiceUrl);
+
+    return fortuneServiceUrl;
+  }
+
+}
+</code></pre>
+
+<p>5) Open a new terminal window.  Start the <code>greeting-service</code> app</p>
+
+<pre><code class="language-bash">$ cd $SPRING_CLOUD_SERVICES_LABS_HOME/greeting-service
+$ mvn clean spring-boot:run
+</code></pre>
+
+<p>6) After the a few moments, check the <code>service-registry</code> dashboard <a href="http://localhost:8761">http://localhost:8761</a>.  Confirm the <code>greeting-service</code> app is registered.
+<img src="images/greeting.png" alt="greeting" title="greeting" /></p>
+
+<p>7) Browse to <a href="http://localhost:8080/">http://localhost:8080/</a> to the <code>greeting-service</code> application.  Confirm you are seeing fortunes.  Refresh as desired.  Also review the terminal output for the <code>greeting-service</code>.  See the <code>fortune-service</code> <code>instanceId</code> and <code>homePageUrl</code> being logged.</p>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>The <code>greeting-service</code> application was able to discover how to reach the <code>fortune-service</code> via the <code>service-registry</code> (Eureka).</p>
+
+<p>8) When done stop the <code>config-server</code>, <code>service-registry</code>, <code>fortune-service</code> and <code>greeting-service</code> applications.</p>
+
+<h3 id="optionally-update-app-config-for-fortune-service-and-greeting-service-to-run-on-pcf:d680e8a854a7cbad6d490c445cba2eba">Optionally Update App Config for <code>fortune-service</code> and <code>greeting-service</code> to run on PCF</h3>
+
+<p>1) You may specify the registration method to use for the applications using the <code>spring.cloud.services.registrationMethod</code> parameter.</p>
+
+<p>It can take either of two values:</p>
+
+<p><code>route</code>: The application will be registered using its Cloud Foundry route (this is the default).</p>
+
+<p><code>direct</code>: The application will be registered using its host IP and port.</p>
+
+<p>The <code>direct</code> registration method is only compatible with Pivotal Cloud Foundry version 1.5 or higher. In Pivotal Cloud Foundry Operations Manager, within the Pivotal Elastic Runtime tile’s Security Config, the “Enable cross-container traffic within each DEA” or “Enable cross-container traffic” option must be enabled.</p>
+
+<p>When using the <code>direct</code> registration method, requests from client applications to registered applications will not go through the Pivotal Cloud Foundry <code>router</code>. You can utilize this with client-side load balancing techniques using <a href="http://projects.spring.io/spring-cloud/docs/1.0.3/spring-cloud.html#spring-cloud-ribbon">Spring Cloud and Netflix Ribbon</a>. To read more on registration techniques go <a href="http://docs.pivotal.io/spring-cloud-services/service-registry/registering-a-service.html">here</a>.</p>
+
+<p>Cross-container traffic has been enabled in our PCF instance.  In your fork of the <code>app-config</code> repo add an additional section to the <code>$APP_CONFIG_REPO_HOME/application.yml</code> file as seen below and push back to GitHub:</p>
+
+<pre><code class="language-yml">security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+logging:
+  level:
+    io:
+      pivotal: DEBUG
+
+spring: # &lt;---NEW SECTION
+  cloud:
+    services:
+      registrationMethod: route
+</code></pre>
+
+<h3 id="deploy-the-fortune-service-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>fortune-service</code> to PCF</h3>
+
+<p>1) Package <code>fortune-service</code></p>
+
+<pre><code class="language-bash">$ mvn clean package
+</code></pre>
+
+<p>2) Deploy <code>fortune-service</code>.</p>
+
+<pre><code class="language-bash">$ cf push fortune-service -p target/fortune-service-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+</code></pre>
+
+<p>3) Create a Service Registry Service Instance.  The <code>service-registry</code> service instance will not be immediately bindable.  It needs a few moments to initialize.</p>
+
+<pre><code class="language-bash">$ cf create-service p-service-registry standard service-registry
+</code></pre>
+
+<p>Click on the <strong><em>Services</em></strong> tab and the <strong><em>Service Registry</em></strong> entry to navigate to your service.</p>
+
+<p><img src="images/services-service-registry.png" alt="service" title="services-service-registry" /></p>
+
+<p>Then, click on the <strong><em>Manage</em></strong> link to determine when the <code>service-registry</code> is ready.</p>
+
+<p><img src="images/manage-service-registry.png" alt="manage" title="manage-service-registry" /></p>
+
+<p>4) Bind services to the <code>fortune-service</code>.</p>
+
+<pre><code class="language-bash">$ cf bind-service fortune-service config-server
+$ cf bind-service fortune-service service-registry
+</code></pre>
+
+<p>You will need to wait and try again if you see the following message when binding the <code>service-registry</code>:</p>
+
+<pre><code>Binding service service-registry to app fortune-service in org dave / space dev as droberts@pivotal.io...
+FAILED
+Server error, status code: 502, error code: 10001, message: Service broker error: Service instance is not running and available for binding.
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>5) Set the <code>TRUST_CERTS</code> environment variable for the <code>fortune-service</code> application (our PCF instance is using self-signed SSL certificates).</p>
+
+<pre><code class="language-bash">$ cf set-env fortune-service TRUST_CERTS &lt;your api endpoint&gt;
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>6) Start the <code>fortune-service</code> app.</p>
+
+<pre><code class="language-bash">$ cf start fortune-service
+</code></pre>
+
+<p>7) Confirm <code>fortune-service</code> registered with the <code>service-registry</code>.  This will take a few moments.</p>
+
+<p>Click on the <strong><em>Manage</em></strong> link for the <code>service-registry</code>.  You can find it by navigating to the space where your applications are deployed.</p>
+
+<p><img src="images/manage-service-registry.png" alt="manage" title="manage-service-registry" /></p>
+
+<p><img src="images/cf-fortune-service.png" alt="fortune-service" title="fortune-service" /></p>
+
+<h3 id="deploy-the-greeting-service-app-to-pcf:d680e8a854a7cbad6d490c445cba2eba">Deploy the <code>greeting-service</code> app to PCF</h3>
+
+<p>1) Package <code>greeting-service</code></p>
+
+<pre><code class="language-bash">$ mvn clean package
+</code></pre>
+
+<p>2) Deploy <code>greeting-service</code>.</p>
+
+<pre><code class="language-bash">$ cf push greeting-service -p target/greeting-service-0.0.1-SNAPSHOT.jar -m 512M --random-route --no-start
+</code></pre>
+
+<p>3) Bind services for the <code>greeting-service</code>.</p>
+
+<pre><code class="language-bash">$ cf bind-service greeting-service config-server
+$ cf bind-service greeting-service service-registry
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>4) If using self signed certificates, set the <code>TRUST_CERTS</code> environment variable for the <code>greeting-service</code> application.</p>
+
+<pre><code class="language-bash">$ cf set-env greeting-service TRUST_CERTS &lt;your api endpoint&gt;
+</code></pre>
+
+<p>You can safely ignore the <em>TIP: Use &lsquo;cf restage&rsquo; to ensure your env variable changes take effect</em> message from the CLI.  We don&rsquo;t need to restage at this time.</p>
+
+<p>5) Start the <code>greeting-service</code> app.</p>
+
+<pre><code class="language-bash">$ cf start greeting-service
+</code></pre>
+
+<p>6) Confirm <code>greeting-service</code> registered with the <code>service-registry</code>.  This will take a few moments.
+<img src="images/cf-greeting.png" alt="greeting" title="greeting" /></p>
+
+<p>7) Browse to the <code>greeting-service</code> application.  Confirm you are seeing fortunes.  Refresh as desired.</p>
+
+<h3 id="scale-the-fortune-service:d680e8a854a7cbad6d490c445cba2eba">Scale the <code>fortune-service</code></h3>
+
+<p>1) Scale the <code>fortune-service</code> app instances to 3.</p>
+
+<pre><code>$ cf scale fortune-service -i 3
+</code></pre>
+
+<p>2) Wait for the new instances to register with the <code>service-registry</code>.  This will take a few moments.</p>
+
+<p>3) Tail the logs for the <code>greeting-service</code> application.</p>
+
+<pre><code class="language-bash">[mac, linux]
+$ cf logs greeting-service | grep GreetingController
+
+[windows]
+$ cf logs greeting-service
+$ # then search output for &quot;GreetingController&quot;
+</code></pre>
+
+<p>4) Refresh the <code>greeting-service</code> <code>/</code> endpoint.</p>
+
+<p>5) Observe the log output.  Compare the <code>instanceId</code> and <code>homePageUrl</code> being logged across log entries. The <code>discoveryClient</code> round robins the <code>fortune-service</code> instances.</p>
+
+<pre><code>2015-10-29T15:49:56.48-0500 [APP/0]      OUT 2015-10-29 20:49:56.481 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:56.49-0500 [APP/0]      OUT 2015-10-29 20:49:56.497 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.27:9f960352-f80b-4316-7577-61dd1815ac5f
+2015-10-29T15:49:56.49-0500 [APP/0]      OUT 2015-10-29 20:49:56.498 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.27:60028/
+2015-10-29T15:49:56.50-0500 [APP/0]      OUT 2015-10-29 20:49:56.507 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:57.72-0500 [APP/0]      OUT 2015-10-29 20:49:57.722 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:57.73-0500 [APP/0]      OUT 2015-10-29 20:49:57.737 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.28:72aa9f59-b27f-4d85-4323-2d79a9d7720c
+2015-10-29T15:49:57.73-0500 [APP/0]      OUT 2015-10-29 20:49:57.737 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.28:60026/
+2015-10-29T15:49:57.74-0500 [APP/0]      OUT 2015-10-29 20:49:57.745 DEBUG 23 --- [nio-8080-exec-6] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:58.66-0500 [APP/0]      OUT 2015-10-29 20:49:58.660 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:58.67-0500 [APP/0]      OUT 2015-10-29 20:49:58.672 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.29:e117fae6-b847-42c7-5286-8662a993351e
+2015-10-29T15:49:58.67-0500 [APP/0]      OUT 2015-10-29 20:49:58.673 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.29:60020/
+2015-10-29T15:49:58.68-0500 [APP/0]      OUT 2015-10-29 20:49:58.682 DEBUG 23 --- [nio-8080-exec-2] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:49:59.60-0500 [APP/0]      OUT 2015-10-29 20:49:59.609 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:49:59.62-0500 [APP/0]      OUT 2015-10-29 20:49:59.626 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.27:9f960352-f80b-4316-7577-61dd1815ac5f
+2015-10-29T15:49:59.62-0500 [APP/0]      OUT 2015-10-29 20:49:59.626 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.27:60028/
+2015-10-29T15:49:59.63-0500 [APP/0]      OUT 2015-10-29 20:49:59.637 DEBUG 23 --- [io-8080-exec-10] io.pivotal.greeting.GreetingController   : Adding fortune
+2015-10-29T15:50:00.54-0500 [APP/0]      OUT 2015-10-29 20:50:00.548 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding greeting
+2015-10-29T15:50:00.56-0500 [APP/0]      OUT 2015-10-29 20:50:00.564 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : instanceID: 10.68.104.28:72aa9f59-b27f-4d85-4323-2d79a9d7720c
+2015-10-29T15:50:00.56-0500 [APP/0]      OUT 2015-10-29 20:50:00.564 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : fortune service homePageUrl: http://10.68.104.28:60026/
+2015-10-29T15:50:00.57-0500 [APP/0]      OUT 2015-10-29 20:50:00.572 DEBUG 23 --- [nio-8080-exec-1] io.pivotal.greeting.GreetingController   : Adding fortune
+</code></pre>
+
+<p>If you are not seeing this behavior, make sure that your logging level is set to <code>DEBUG</code> and you have refreshed the configurations for the greeting service.</p>
+
+<p><strong><em>What Just Happened?</em></strong></p>
+
+<p>The <code>greeting-service</code> and <code>fortune-service</code> both registered with the <code>service-registry</code> (Eureka).  The <code>greeting-service</code> was able to locate the <code>fortune-service</code> via the <code>service-registry</code>.  The <code>greeting-service</code> round robins requests to all the <code>fortune-service</code> instances.</p>
+
+					</section>
+				</article>
+			</main>
+		</div> 
+
+
+	</div> 
+</div>
+
+<hr />
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8">
+			<p class="doc-footer-em"><a href="#">Back to TOP</a></p>
+		</div>
+	</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	<p>© Copyright Pivotal. All rights reserved.</p>
+</footer>
+
+
+
+
+
+<script src="/spring-cloud-services/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/spring-cloud-services/js/ie10-viewport-bug-workaround.js"></script>
+
+</body>
+</html>
+
